@@ -3,3 +3,4 @@ ADCache.json
 KeyMaster.log
 *.pyc
 KeyMaster-watchdog
+.hub
