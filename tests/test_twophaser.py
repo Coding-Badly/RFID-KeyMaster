@@ -5,7 +5,7 @@ import pytest
 import random
 import tempfile
 from time import sleep
-from utils.TwoPhaser import two_phase_open
+from utils.twophaser import two_phase_open
 
 logger = logging.getLogger(__name__)
 
