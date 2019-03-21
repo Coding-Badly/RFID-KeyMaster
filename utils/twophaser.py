@@ -88,7 +88,8 @@
   Reading...
   - Recover
   - Open the primary file for reading
-"""
+
+============================================================================="""
 
 from exceptions.WritableMismatch import WritableMismatch
 
