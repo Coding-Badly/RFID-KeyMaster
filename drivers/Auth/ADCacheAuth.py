@@ -1,4 +1,5 @@
 from drivers.Auth.Auth import Auth
+from utils.twophaser import two_phase_open
 import requests
 import threading
 import os
@@ -15,6 +16,7 @@ class ADCacheAuth(Auth):
 	def __init__(self, config, loader):
 		self.mutex = threading.RLock()
 		super().__init__(config, loader)
+		self.local_cache_file = "ADCache.json"
 		
 	def setup(self):
 		self.rfid = self.getDriver('rfid')
@@ -22,14 +24,12 @@ class ADCacheAuth(Auth):
 		logging.debug("Setup ADCacheAuth")
 
 		self.groups_allowed = self.config['groups_allowed'].split(',')
-		self.groups_denied = self.config['groups_denied'].split(',')
+		self.groups_denied = self.config.get('groups_denied','').split(',')
 		logging.debug("groups_allowed: %s" % self.groups_allowed)
 		logging.debug("groups_denied: %s" % self.groups_denied)
 
 		self.remote_cache_url = self.config['remote_cache_url']
 		self.apikey = self.config['apikey']
-
-		self.local_cache_file = "ADCache.json"
 
 		self.sync_delay = 60
 		if 'sync_delay' in self.config:
@@ -79,7 +79,7 @@ class ADCacheAuth(Auth):
 		self.mutex.release()
 
 	def loadCache(self):
-		with open(self.local_cache_file) as f:
+		with two_phase_open(self.local_cache_file) as f:
 			self.ad_cache = json.load(f)
 
 	def syncCheck(self):
