@@ -7,8 +7,8 @@ class Auth(Loadable):
 	groups_allow = []
 	groups_deny = []
 
-	def __init__(self, config, loader):
-		super().__init__(config, loader)
+	def __init__(self, config, loader, id):
+		super().__init__(config, loader, id)
 
 	def setup(self):
 		self.groups_allow = self.config['groups_allow']

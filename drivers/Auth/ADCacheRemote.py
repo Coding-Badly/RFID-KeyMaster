@@ -13,9 +13,9 @@ import os
 class ADCacheAuth(Auth):
 	ad_cache = {}
 
-	def __init__(self, config, loader):
+	def __init__(self, config, loader, id):
 		self.mutex = threading.RLock()
-		super().__init__(config, loader)
+		super().__init__(config, loader, id)
 		self.local_cache_file = "ADCache.json"
 		
 	def setup(self):
