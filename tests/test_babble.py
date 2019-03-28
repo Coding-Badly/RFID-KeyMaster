@@ -39,10 +39,11 @@ logger = logging.getLogger(__name__)
 
 ################################################################################
 
-def get_employee_id_set(load_these=None):
-    if load_these is None:
-        load_these = SuperGlobAndOpen(skip_if_not_exists=True, empty_if_bad_password=True)
-        load_these.add(Path('Employee IDs.zip'))
+@pytest.fixture(scope="module")
+def employee_ids_path(shared_data_path):
+    return shared_data_path / 'Employee IDs.zip'
+
+def get_employee_id_set(load_these):
     rv = set()
     for load_this in load_these:
         if load_this.name.suffix.lower() == '.txt':
@@ -53,15 +54,15 @@ def get_employee_id_set(load_these=None):
                         rv.add(row[0].upper())
     return rv
 
-@pytest.fixture(scope="session")
-def load_these_employee_ids():
+@pytest.fixture(scope="module")
+def load_these_employee_ids(employee_ids_path):
     load_these = SuperGlobAndOpen(skip_if_not_exists=True, empty_if_bad_password=True)
     load_these.add(Path('Does Not Exist.txt'))
-    load_these.add(Path('Employee IDs.zip'))
+    load_these.add(employee_ids_path)
     load_these.add(Path('Does Not Exist.zip'))
     return load_these
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def employee_ids(load_these_employee_ids):
     return get_employee_id_set(load_these_employee_ids)
 
@@ -69,7 +70,7 @@ def test_get_employee_id_set(caplog, employee_ids):
     caplog.set_level(logging.INFO)
     logger.info("%d employee IDs.", len(employee_ids))
 
-def test_build_employee_id_babble(caplog, employee_ids):
+def test_build_employee_id_babble(caplog, employee_ids, shared_data_path):
     caplog.set_level(logging.INFO)
     tm3 = FilteredBabbler(TwoLetterTerminal())
     tm3.add_filter(BabblerFilterDontUseThese(employee_ids))
@@ -84,7 +85,7 @@ def test_build_employee_id_babble(caplog, employee_ids):
         for i1 in range(20):
             word = tm3.babble()
             logger.info("{}, {}".format(word, word in employee_ids))
-        save_here = EmployeeIDsBabbleFile('w')
+        save_here = EmployeeIDsBabbleFile(shared_data_path, 'w')
         if save_here.has_password():
             with save_here as stream:
                 yaml.dump(tm3, stream, encoding='utf-8')
@@ -120,7 +121,7 @@ def get_first_name_sets(load_these=None):
                             boys.add(row[0])
     return (girls, boys)
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def load_these_first_name_sets():
     load_these = SuperGlobAndOpen(skip_if_not_exists=True, empty_if_bad_password=True)
     load_these.add(Path('Does Not Exist.txt'))
@@ -129,19 +130,19 @@ def load_these_first_name_sets():
     load_these.add(Path('First Names from DMS.zip'))
     return load_these
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def first_name_sets(load_these_first_name_sets):
     return get_first_name_sets(load_these_first_name_sets)
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def girls(first_name_sets):
     return first_name_sets[0]
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def boys(first_name_sets):
     return first_name_sets[1]
 
-@pytest.fixture(scope="session", params=['girls', 'boys'])
+@pytest.fixture(scope="module", params=['girls', 'boys'])
 def each_gender(request, first_name_sets):
     return first_name_sets[0] if request.param == 'girls' else first_name_sets[1]
 
@@ -187,7 +188,7 @@ def get_last_name_set(load_these=None):
                         rv.add(row[0].upper())
     return rv
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def load_these_last_names():
     load_these = SuperGlobAndOpen(skip_if_not_exists=True, empty_if_bad_password=True)
     load_these.add(Path('Last Names from Census Bureau.zip'))
@@ -196,7 +197,7 @@ def load_these_last_names():
     load_these.add(Path('Does Not Exist.zip'))
     return load_these
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def last_names(load_these_last_names):
     return get_last_name_set(load_these_last_names)
 

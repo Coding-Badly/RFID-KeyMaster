@@ -28,17 +28,18 @@ from utils.superglob import ENVIRONMENT_VARIABLE_PREFIX, clean_stem_to_simple_en
 import yaml
 
 class EmployeeIDsBabbleFile():
-    def __init__(self, mode):
+    def __init__(self, shared_data_path, mode):
+        self._shared_data_path = shared_data_path
         self._mode = mode
-        self._filename = None
+        self._path = None
         self._password = None
         self._zip = None
         self._stream = None
     def _init_part2(self):
-        if self._filename is None:
-            self._filename = Path('Employee IDs Babble.zip')
+        if self._path is None:
+            self._path = self._shared_data_path / 'Employee IDs Babble.zip'
         if self._password is None:
-            envarname = ENVIRONMENT_VARIABLE_PREFIX + clean_stem_to_simple_environment_variable(self._filename.stem)
+            envarname = ENVIRONMENT_VARIABLE_PREFIX + clean_stem_to_simple_environment_variable(self._path.stem)
             self._password = os.getenv(envarname, None)
     def has_password(self):
         self._init_part2()
@@ -47,7 +48,7 @@ class EmployeeIDsBabbleFile():
         if not self.has_password():
             raise RuntimeError('No password available')
         self._zip = pyzipper.AESZipFile(
-                self._filename, 
+                self._path, 
                 self._mode, 
                 compression=pyzipper.ZIP_LZMA, 
                 encryption=pyzipper.WZ_AES)
@@ -88,9 +89,9 @@ class RandomRFID():
             rv += chr(random.randrange(10)+ord('0'))
         return rv
 
-@pytest.fixture(scope="session")
-def employee_ids_babble():
-    read_this = EmployeeIDsBabbleFile('r')
+@pytest.fixture(scope="module")
+def employee_ids_babble(shared_data_path):
+    read_this = EmployeeIDsBabbleFile(shared_data_path, 'r')
     if read_this.has_password():
         with read_this as stream:
             rv = yaml.full_load(stream)
