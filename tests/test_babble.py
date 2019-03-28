@@ -1,5 +1,27 @@
+"""=============================================================================
+
+  pytest for babble.
+  
+  ----------------------------------------------------------------------------
+
+  Copyright 2019 Brian Cook (aka Coding-Badly)
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+============================================================================="""
 import array
 from utils.babble import BabblerFilterDontUseThese, BabblerFilterMatchHistogram, BabblerFilterNotTooShort, FilteredBabbler, TwoLetterTerminal, WordSequence
+from tests.babble_fixtures import EmployeeIDsBabbleFile, employee_ids_babble
 import collections
 import copy
 import csv
@@ -47,7 +69,7 @@ def test_get_employee_id_set(caplog, employee_ids):
     caplog.set_level(logging.INFO)
     logger.info("%d employee IDs.", len(employee_ids))
 
-def test_employee_id_babble(caplog, employee_ids):
+def test_build_employee_id_babble(caplog, employee_ids):
     caplog.set_level(logging.INFO)
     tm3 = FilteredBabbler(TwoLetterTerminal())
     tm3.add_filter(BabblerFilterDontUseThese(employee_ids))
@@ -62,14 +84,16 @@ def test_employee_id_babble(caplog, employee_ids):
         for i1 in range(20):
             word = tm3.babble()
             logger.info("{}, {}".format(word, word in employee_ids))
-        filename = Path('Employee IDs Babble.zip')
-        envarname = ENVIRONMENT_VARIABLE_PREFIX + clean_stem_to_simple_environment_variable(filename.stem)
-        password = os.getenv(envarname, None)
-        if password:
-            with pyzipper.AESZipFile(filename, 'w', compression=pyzipper.ZIP_LZMA, encryption=pyzipper.WZ_AES) as zip:
-                zip.pwd = password
-                with zip.open('Employee IDs Babble.yaml', 'w') as ouf:
-                    yaml.dump(tm3, ouf, encoding='utf-8')
+        save_here = EmployeeIDsBabbleFile('w')
+        if save_here.has_password():
+            with save_here as stream:
+                yaml.dump(tm3, stream, encoding='utf-8')
+
+def test_load_employee_id_babble(caplog, employee_ids, employee_ids_babble):
+    caplog.set_level(logging.INFO)
+    for i1 in range(20):
+        word = employee_ids_babble.babble()
+        logger.info("{}, {}".format(word, word in employee_ids))
 
 ################################################################################
 
