@@ -1,6 +1,6 @@
-from drivers.Loadable import Loadable
+from drivers.DriverBase import DriverBaseOld
 
-class CurrentSense(Loadable):
+class CurrentSense(DriverBaseOld):
     _events_ = ['current_change']
 
     def __init__(self, config, loader):

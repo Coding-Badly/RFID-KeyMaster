@@ -19,9 +19,9 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers.Loadable import Loadable
+from drivers.DriverBase import DriverBaseOld
 
-class RFID(Loadable):
+class RFID(DriverBaseOld):
     _events_ = ['swipe']
 
     def __init__(self, config, loader, id):

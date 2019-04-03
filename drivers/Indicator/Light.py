@@ -1,9 +1,9 @@
-from drivers.Loadable import Loadable
+from drivers.DriverBase import DriverBaseOld
 import time
 import logging
 import os
 
-class Light(Loadable):
+class Light(DriverBaseOld):
 	"""
 	Driver for a single light and also base class for other lights
 	"""

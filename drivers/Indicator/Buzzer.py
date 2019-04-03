@@ -1,5 +1,5 @@
-from drivers.Loadable import Loadable
+from drivers.DriverBase import DriverBaseOld
 
 
-class Buzzer(Loadable):
+class Buzzer(DriverBaseOld):
     pass

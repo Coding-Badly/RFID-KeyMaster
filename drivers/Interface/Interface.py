@@ -1,4 +1,4 @@
-from drivers.Loadable import Loadable
+from drivers.DriverBase import DriverBaseOld
 
-class Interface(Loadable):
+class Interface(DriverBaseOld):
     pass

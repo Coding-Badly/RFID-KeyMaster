@@ -1,8 +1,8 @@
-from drivers.Loadable import Loadable
+from drivers.DriverBase import DriverBaseOld
 import queue
 
 
-class Controller(Loadable):
+class Controller(DriverBaseOld):
     controller = "Controller"
     def __init__(self, config, loader):
         super().__init__(config, loader)

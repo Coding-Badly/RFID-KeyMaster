@@ -1,5 +1,5 @@
-from drivers.Loadable import Loadable
+from drivers.DriverBase import DriverBaseOld
 
-class Log(Loadable):
+class Log(DriverBaseOld):
     def setup(self):
         return False

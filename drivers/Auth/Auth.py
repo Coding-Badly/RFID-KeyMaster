@@ -1,7 +1,7 @@
-from drivers.Loadable import Loadable
+from drivers.DriverBase import DriverBaseOld
 import logging
 
-class Auth(Loadable):
+class Auth(DriverBaseOld):
 	_events_ = ['auth', 'auth_processing']
 
 	groups_allow = []
