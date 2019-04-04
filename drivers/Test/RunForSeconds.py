@@ -1,9 +1,9 @@
 """=============================================================================
 
-  Ping for RFID-KeyMaster testing.  Ping and Pong are meant to test the
+  Pong for RFID-KeyMaster testing.  Ping and Pong are meant to test the
   threading and messaging of RFID-KeyMaster.  The two simply pass an event back
   and forth.
-
+  
   ----------------------------------------------------------------------------
 
   Copyright 2019 Brian Cook (aka Coding-Badly)
@@ -24,31 +24,17 @@
 from drivers.DriverBase import DriverBase
 import queue
 
-class Ping(DriverBase):
-    _events_ = ['receive_ball']
-    def __init__(self, stop_at_1000 = True):
-        super().__init__('Ping', None, None, None)
-        self._stop_at_1000 = stop_at_1000
-    def setup(self):
-        super().setup()
-        self.subscribe('Pong', 'receive_ball', 13)
-        self._last_count = None
-        return True  # rmv
-    def startup(self):
-        super().startup()
-        self.publish('receive_ball', 1)
+class RunForSeconds(DriverBase):
+    _events_ = [DriverBase.EVENT_STOP_NOW]
+    def __init__(self, seconds):
+        super().__init__('RunForSeconds', None, None, None)
+        self._seconds = seconds
     def loop(self):
         try:
-            event = self.get(timeout=0.100)
-            if callable(event.id):
-                event.id(event)
-            else:
-                if event.id == 13:
-                    count = event.args[0]
-                    self._last_count = count
-                    if (not self._stop_at_1000) or (count < 1000):
-                        self.publish('receive_ball', count+1)
-            return True
+            event = self.get(timeout=self._seconds)
         except queue.Empty:
             pass
         return False
+    def shutdown(self):
+        super().shutdown()
+        self.publish(DriverBase.EVENT_STOP_NOW)

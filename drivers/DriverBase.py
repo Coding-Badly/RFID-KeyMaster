@@ -10,7 +10,7 @@
   ----------------------------------------------------------------------------
 
   Copyright 2019 Mike Cole (aka @Draco, MikeColeGuru)
-  Copyright 2019 Brian Cook (aka Coding-Badly)
+  Copyright 2019 Brian Cook (aka @Brian, Coding-Badly)
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -28,11 +28,12 @@
 from collections import OrderedDict
 from threading import Thread
 from exceptions.RequiredDriverException import RequiredDriverException
+from exceptions.RequiredEventException import RequiredEventException
+import heapq
 import logging
 import os
 from pydispatch import Dispatcher
 import queue
-import heapq
 
 next_name_index = 1
 
@@ -59,25 +60,36 @@ class DriverGroup(OrderedDict):
         driver_or_group._parent = self
         return driver_or_group
 
-    def find_driver_by_event(self, event_name):
-        return self._find_driver_by_event_in_children(event_name, None)
+    def emits_event(self, event_name):
+        return False
 
-    def _find_driver_by_event_in_children(self, event_name, skip):
-        if skip == self:
-            return None
-        for driver_or_group in self.values():
-            rv = driver_or_group._find_driver_by_event_in_children(event_name, skip)
-            if rv is not None:
-                break
-        if rv is None:
-            if self._parent is not None:
-                return self._parent._find_driver_by_event_in_children(event_name, self)
-        return rv
+    def has_values(self):
+        return True
 
-    def find_driver_by_name(self, driver_name):
-        return self._find_driver_by_name_in_children(driver_name, None)
+    def find_driver_by_event(self, event_name, skip=None):
+        # Breadth-first search down then working up.
+        heap = list()
+        anchor = self
+        order = 1
+        # fix? The while loop probably needs to also continue if heap is not
+        # empty.
+        while anchor is not None:
+            heapq.heappush(heap, (1, order, anchor))
+            order += 1
+            while heap:
+                priority, _, current = heapq.heappop(heap)
+                priority += 1
+                if current.emits_event(event_name):
+                    return current
+                if current.has_values():
+                    for child in current.values():
+                        if child != skip:
+                            heapq.heappush(heap, (priority, order, child))
+                            order += 1
+            skip = anchor
+            anchor = anchor._parent
 
-    def _find_driver_by_name_in_children(self, driver_name, skip):
+    def find_driver_by_name(self, driver_name, skip=None):
         # Short-circuit.  Most queries should stop here.
         rv = self.get(driver_name, None)
         if rv is not None:
@@ -86,6 +98,8 @@ class DriverGroup(OrderedDict):
         heap = list()
         anchor = self
         order = 1
+        # fix? The while loop probably needs to also continue if heap is not
+        # empty.
         while anchor is not None:
             heapq.heappush(heap, (1, order, anchor))
             order += 1
@@ -96,8 +110,10 @@ class DriverGroup(OrderedDict):
                 if rv is not None:
                     return rv
                 for child in current.values():
-                    # fix? Use a method call instead of isinstance?  child.has_values for example?
-                    if (child != skip) and isinstance(child, DriverGroup):
+                    # isinstance(child, DriverGroup) could be used instead of
+                    # child.has_values().  has_values allows classes other
+                    # than DriverGroup to participate.
+                    if (child != skip) and child.has_values(): 
                         heapq.heappush(heap, (priority, order, child))
                         order += 1
             skip = anchor
@@ -106,12 +122,19 @@ class DriverGroup(OrderedDict):
             return self
         return None
 
+    def ok_to_start(self):
+        for driver_or_group in self.values():
+            if not driver_or_group.ok_to_start():
+                return False
+        return True
+
     def setup(self):
         # fix? Do something with the return values?
         # fix? Fail to run if any return False?
         self._startable.clear()
         for driver_or_group in self.values():
-            if driver_or_group.setup():
+            driver_or_group.setup()
+            if driver_or_group.ok_to_start():
                 self._startable.append(driver_or_group)
 
     def start(self):
@@ -149,8 +172,11 @@ class DriverThunk():
     def thunk(self, *args):
         event = DriverEvent(self._id, args)
         self._event_queue.put(event)
+        return True
 
 class DriverBase(Thread, Dispatcher):
+    EVENT_STOP_NOW = 'stop_now'
+
     def __init__(self, name, config, loader, id):
         self._parent = None
         self._name = name
@@ -159,20 +185,78 @@ class DriverBase(Thread, Dispatcher):
         self.id = id
         self._event_queue = queue.Queue()
         self._event_thunks = list()
+        # fix: Use the following instead of returning a Boolean from setup.
+        self._ok_to_start = True
         super().__init__(name=name)
 
     @property
     def name(self):
         return self._name
 
-    def setup(self):
+    def emits_event(self, event_name):
+        events = getattr(self, '_EVENTS_', None)
+        if events is None:
+            return False
+        return event_name in events
+
+    def has_values(self):
         return False
 
+    def find_driver_by_event(self, event_name):
+        return self._parent.find_driver_by_event(event_name, self)
+
+    def find_driver_by_name(self, driver_name):
+        return self._parent.find_driver_by_name(driver_name, self)
+
+    def getDriver(self, driver_name, controller=None):
+        driver = self.loader.getDriver(driver_name, controller)
+        if driver == None:
+            raise RequiredDriverException(driver_name)
+        return driver  
+
+    def subscribe(self, driver_name, event_name, id, raise_on_not_found=True):
+        if driver_name is None:
+            partner = self.find_driver_by_event(event_name)
+            if partner is None:
+                if raise_on_not_found:
+                    raise RequiredEventException(event_name)
+                else:
+                    return False
+        else:
+            partner = self.find_driver_by_name(driver_name)
+            if partner is None:
+                if raise_on_not_found:
+                    raise RequiredDriverException(driver_name)
+                else:
+                    return False
+        thunk = DriverThunk(partner, event_name, id, self._event_queue)
+        self._event_thunks.append(thunk)
+        return True
+
+    def publish(self, event_name, *args, **kwargs):
+        return self.emit(event_name, args, kwargs)
+
+    def ok_to_start(self):
+        return self._ok_to_start
+
+    #fix
+    #def revoke(self):
+
+    def get(self, block=True, timeout=None):
+        return self._event_queue.get(block=block, timeout=timeout)
+
+    def setup(self):
+        self.subscribe(None, DriverBase.EVENT_STOP_NOW, self._stop_now, False)
+        return False  # rmv
+
     def startup(self):
-        pass
+        self._keep_running = self._ok_to_start
 
     def loop(self):
         return False
+
+    def _stop_now(self, event):
+        self._keep_running = False
 
     def shutdown(self):
         pass
@@ -184,54 +268,14 @@ class DriverBase(Thread, Dispatcher):
         # basic fashion as setup.
         pass
 
-    def find_driver_by_event(self, event_name):
-        return self._parent._find_driver_by_event_in_children(event_name, self)
-
-    def _find_driver_by_event_in_children(self, event_name, skip):
-        if skip == self:
-            return None
-        events = getattr(self, '_events_', None)
-        if events is None:
-            return None
-        if event_name in events:
-            return self
-        return None
-
-    def find_driver_by_name(self, driver_name):
-        return self._parent._find_driver_by_name_in_children(driver_name, self)
-
-    def getDriver(self, driver_name, controller=None):
-        driver = self.loader.getDriver(driver_name, controller)
-        if driver == None:
-            raise RequiredDriverException(driver_name)
-        return driver  
-
-    def subscribe(self, driver_name, event_name, id):
-        if driver_name is None:
-            pass
-        else:
-            partner = self.find_driver_by_name(driver_name)
-            if partner is None:
-                raise RequiredDriverException(driver_name)
-            thunk = DriverThunk(partner, event_name, id, self._event_queue)
-            self._event_thunks.append(thunk)
-
-    def publish(self, event_name, *args, **kwargs):
-        self.emit(event_name, args, kwargs)
-    
-    #fix
-    #def revoke(self):
-
-    def get(self, block=True, timeout=None):
-        return self._event_queue.get(block=block, timeout=timeout)
-
     def run(self):
         try:
             self.startup()
             # rmv self.startup = True
             try:
-                while self.loop() != False:
-                    pass
+                while self._keep_running:
+                    if not self.loop():
+                        self._keep_running = False
                     # rmv self.startup = False
             finally:
                 self.shutdown()

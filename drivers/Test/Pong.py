@@ -29,12 +29,14 @@ class Pong(DriverBase):
     def __init__(self):
         super().__init__('Pong', None, None, None)
     def setup(self):
-        self.subscribe('Ping', 'receive_ball', self.receive_ball)
+        super().setup()
+        self.subscribe(None, 'receive_ball', self.receive_ball)
         self._last_count = None
-        return True
+        return True  # rmv
     def loop(self):
         try:
             event = self.get(timeout=0.100)
+            #callable(event.id)
             if event.id == 13:
                 count = event.args[0]
                 self._last_count = count

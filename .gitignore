@@ -4,3 +4,4 @@ KeyMaster.log
 *.pyc
 KeyMaster-watchdog
 rnd/
+*.~py
