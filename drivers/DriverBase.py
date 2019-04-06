@@ -43,6 +43,14 @@ def get_next_name():
     next_name_index += 1
     return rv
 
+class FauxDriverParent():
+    def find_driver_by_event(self, event_name, skip=None):
+        return None
+    def find_driver_by_name(self, driver_name, skip=None):
+        return None
+
+default_driver_parent = FauxDriverParent()
+
 class DriverGroup(OrderedDict):
     def __init__(self, name=None):
         super().__init__()
@@ -55,7 +63,8 @@ class DriverGroup(OrderedDict):
         return self._name
 
     def add(self, driver_or_group):
-        assert driver_or_group._parent is None
+        assert (driver_or_group._parent == default_driver_parent) \
+                or (driver_or_group._parent is None)
         self[driver_or_group.name] = driver_or_group
         driver_or_group._parent = self
         return driver_or_group
@@ -178,7 +187,7 @@ class DriverBase(Thread, Dispatcher):
     EVENT_STOP_NOW = 'stop_now'
 
     def __init__(self, name, config, loader, id):
-        self._parent = None
+        self._parent = default_driver_parent
         self._name = name
         self.config = config
         self.loader = loader
@@ -243,6 +252,7 @@ class DriverBase(Thread, Dispatcher):
     #def revoke(self):
 
     def get(self, block=True, timeout=None):
+        # fix: At some point _event_queue.task_done() should be called.
         return self._event_queue.get(block=block, timeout=timeout)
 
     def setup(self):
