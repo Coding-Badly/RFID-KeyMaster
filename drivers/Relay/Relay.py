@@ -1,8 +1,8 @@
-from drivers.Loadable import Loadable
+from drivers.DriverBase import DriverBaseOld
 import time
 
 
-class Relay(Loadable):
+class Relay(DriverBaseOld):
     """
     Driver for a single relay
     """
