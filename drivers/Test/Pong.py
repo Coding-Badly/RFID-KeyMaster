@@ -22,6 +22,7 @@
 
 ============================================================================="""
 from drivers.DriverBase import DriverBase
+import logging
 import queue
 
 class Pong(DriverBase):
@@ -36,18 +37,11 @@ class Pong(DriverBase):
     def loop(self):
         try:
             event = self.get(timeout=0.100)
-            #callable(event.id)
-            if event.id == 13:
-                count = event.args[0]
-                self._last_count = count
-                self.publish('receive_ball', count+1)
-            else:
-                event.id(event)
+            event.id(*event.args, **event.kwargs)
             return True
         except queue.Empty:
             pass
         return False
-    def receive_ball(self, event):
-        count = event.args[0]
+    def receive_ball(self, count):
         self._last_count = count
         self.publish('receive_ball', count+1)

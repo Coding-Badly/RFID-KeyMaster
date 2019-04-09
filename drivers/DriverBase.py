@@ -34,6 +34,10 @@ import logging
 import os
 from pydispatch import Dispatcher
 import queue
+import selectors
+from time import monotonic as time
+
+logger = logging.getLogger(__name__)
 
 next_name_index = 1
 
@@ -156,20 +160,21 @@ class DriverGroup(OrderedDict):
             driver_or_group.teardown()
 
 class DriverEvent():
-    def __init__(self, id, args):
+    def __init__(self, id, args, kwargs):
         self._id = id
         self._args = args
+        self._kwargs = kwargs
     def __str__(self):
-        return 'Event({}, {}, {})'.format(self._id, self._args[0], self._args[1])
+        return 'Event({}, {}, {})'.format(self._id, self._args, self._kwargs)
     @property
     def id(self):
         return self._id
     @property
     def args(self):
-        return self._args[0]
+        return self._args
     @property
     def kwargs(self):
-        return self._args[1]
+        return self._kwargs
 
 class DriverThunk():
     def __init__(self, dispatcher, event_name, id, event_queue):
@@ -178,10 +183,83 @@ class DriverThunk():
         self._event_queue = event_queue
         dispatcher_arg = { event_name: self.thunk }
         dispatcher.bind(**dispatcher_arg)
-    def thunk(self, *args):
-        event = DriverEvent(self._id, args)
+    def thunk(self, *args, **kwargs):
+        # rmv logger.info('DriverThunk.thunk: %s, %s', args, kwargs)
+        event = DriverEvent(self._id, args, kwargs)
         self._event_queue.put(event)
         return True
+
+class DriverQueue(queue.Queue):
+    def setup(self):
+        pass
+    def teardown(self):
+        pass
+
+class DriverQueuePlusSelect():
+    BYTE_ZERO = chr(0).encode()
+    def __init__(self, *args, **kwargs):
+        self._queue = queue.Queue(*args, **kwargs)
+    def setup(self):
+        self._selector = selectors.DefaultSelector()
+        self._wake_pipe_read, self._wake_pipe_write = os.pipe()
+        self.register = self._selector.register
+        self.unregister = self._selector.unregister
+        self.register(self._wake_pipe_read, selectors.EVENT_READ, None) # rmv EmptyPipe())
+    def put(self, item, block=True, timeout=None):
+        self._queue.put(item, block, timeout)
+        os.write(self._wake_pipe_write, DriverQueuePlusSelect.BYTE_ZERO)
+    def get(self, block=True, timeout=None):
+        select_timeout = 0
+        tries = 0
+        while True:
+            tries += 1
+            status = self._selector.select(timeout=select_timeout)
+            if len(status) > 0:
+                for row in status:
+                    # row[0] is the SelectorKey.
+                    # row[1] is an event mask.
+                    key = row[0]
+                    # Not our _wake_pipe_read?
+                    if key.fd != self._wake_pipe_read:
+                        # Found a file descriptor ready for I/O.  Wrap it and return.
+                        return DriverEvent(key.data, row)
+                    else:
+                        # Just keep our wake pipe clear.
+                        _ = os.read(self._wake_pipe_read, 1)  # aka key.fd
+            try:
+                event = self._queue.get_nowait()
+                return event
+            except queue.Empty:
+                pass
+            # There were no ready file descriptors and no queued events.
+            # If we are not supposed to block then raise an exception.
+            if not block:
+                raise queue.Empty
+            # Timeout?
+            if tries > 1:
+                if select_timeout is not None:
+                    remaining = endtime - time()
+                    if remaining <= 0.0:
+                        raise queue.Empty
+            # If we are supposed to block forever then adjust and loop.
+            if timeout is None:
+                select_timeout = None
+                continue
+            # Otherwise we are supposed to wait for timeout seconds.
+            else:
+                select_timeout = timeout
+                if tries == 1:
+                    endtime = time() + timeout
+                continue
+    def teardown(self):
+        self.unregister(self._wake_pipe_read)
+        # for fileobj in self._registered.keys()
+        # self._selector.get_map
+        self._selector.close()
+        os.close(self._wake_pipe_write)
+        self._wake_pipe_write = None
+        os.close(self._wake_pipe_read)
+        self._wake_pipe_read = None
 
 class DriverBase(Thread, Dispatcher):
     EVENT_STOP_NOW = 'stop_now'
@@ -192,7 +270,7 @@ class DriverBase(Thread, Dispatcher):
         self.config = config
         self.loader = loader
         self.id = id
-        self._event_queue = queue.Queue()
+        # rmv self._event_queue = DriverQueue()
         self._event_thunks = list()
         # fix: Use the following instead of returning a Boolean from setup.
         self._ok_to_start = True
@@ -243,7 +321,7 @@ class DriverBase(Thread, Dispatcher):
         return True
 
     def publish(self, event_name, *args, **kwargs):
-        return self.emit(event_name, args, kwargs)
+        return self.emit(event_name, *args, **kwargs)
 
     def ok_to_start(self):
         return self._ok_to_start
@@ -255,7 +333,12 @@ class DriverBase(Thread, Dispatcher):
         # fix: At some point _event_queue.task_done() should be called.
         return self._event_queue.get(block=block, timeout=timeout)
 
+    def _create_event_queue(self):
+        return DriverQueue()
+
     def setup(self):
+        self._event_queue = self._create_event_queue()
+        self._event_queue.setup()
         self.subscribe(None, DriverBase.EVENT_STOP_NOW, self._stop_now, False)
         return False  # rmv
 
@@ -265,7 +348,7 @@ class DriverBase(Thread, Dispatcher):
     def loop(self):
         return False
 
-    def _stop_now(self, event):
+    def _stop_now(self):
         self._keep_running = False
 
     def shutdown(self):
@@ -276,7 +359,7 @@ class DriverBase(Thread, Dispatcher):
         # setup.  Whatever is down in setup should be undone in teardown.  If
         # this method is ever brought into play it will be called in the same
         # basic fashion as setup.
-        pass
+        self._event_queue.teardown()
 
     def run(self):
         try:

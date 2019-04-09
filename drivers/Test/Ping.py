@@ -41,7 +41,7 @@ class Ping(DriverBase):
         try:
             event = self.get(timeout=0.100)
             if callable(event.id):
-                event.id(event)
+                event.id(*event.args, **event.kwargs)
             else:
                 if event.id == 13:
                     count = event.args[0]

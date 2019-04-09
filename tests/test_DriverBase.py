@@ -132,6 +132,7 @@ def test_ping_pong_level_three_sparse(caplog):
     assert rgt_rgt_pong == lft_lft_ping.find_driver_by_event('receive_ball')
 
 def test_ping_pong_run(caplog):
+    caplog.set_level(logging.INFO)
     root = DriverGroup('root')
     ping = root.add(Ping())
     pong = root.add(Pong())
