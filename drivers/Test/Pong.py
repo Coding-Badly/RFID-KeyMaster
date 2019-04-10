@@ -25,10 +25,10 @@ from drivers.DriverBase import DriverBase
 import logging
 import queue
 
-class Pong(DriverBase):
+class Pong1(DriverBase):
     _events_ = ['receive_ball']
     def __init__(self):
-        super().__init__('Pong', None, None, None)
+        super().__init__('Pong1', None, None, None)
     def setup(self):
         super().setup()
         self.subscribe(None, 'receive_ball', self.receive_ball)

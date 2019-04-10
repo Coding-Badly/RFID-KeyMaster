@@ -1,8 +1,9 @@
-from drivers.DriverBase import DriverGroup
-from drivers.Test.Ping import Ping
-from drivers.Test.Pong import Pong
+from drivers.DriverBase import DriverGroup, DeathOfRats
+from drivers.Test.Ping import Ping1, Ping2
+from drivers.Test.Pong import Pong1
 from drivers.Test.RunForSeconds import RunForSeconds
 import logging
+import time
 
 def test_DriverGroup_simple_construction():
     tm1 = DriverGroup()
@@ -17,10 +18,10 @@ def rmv_test_empty():
 
 def rmv_test_just_one():
     tm1 = DriverGroup()
-    tm2 = Ping()
+    tm2 = Ping1()
     tm1.add(tm2)
-    assert tm1['Ping'] == tm2
-    tm3 = tm2.find_driver_by_name('Ping')
+    assert tm1['Ping1'] == tm2
+    tm3 = tm2.find_driver_by_name('Ping1')
     assert tm3 == tm2
     tm1.setup()
     tm1.start()
@@ -29,22 +30,22 @@ def rmv_test_just_one():
 def test_ping_pong_by_driver_name(caplog):
     caplog.set_level(logging.INFO)
     tm1 = DriverGroup()
-    tm2 = tm1.add(Ping())
-    tm3 = tm1.add(Pong())
-    assert tm1['Ping'] == tm2
-    assert tm1['Pong'] == tm3
-    assert tm2 == tm1.find_driver_by_name('Ping')
-    assert tm2 == tm2.find_driver_by_name('Ping')
-    assert tm2 == tm3.find_driver_by_name('Ping')
-    assert tm3 == tm1.find_driver_by_name('Pong')
-    assert tm3 == tm2.find_driver_by_name('Pong')
-    assert tm3 == tm3.find_driver_by_name('Pong')
+    tm2 = tm1.add(Ping1())
+    tm3 = tm1.add(Pong1())
+    assert tm1['Ping1'] == tm2
+    assert tm1['Pong1'] == tm3
+    assert tm2 == tm1.find_driver_by_name('Ping1')
+    assert tm2 == tm2.find_driver_by_name('Ping1')
+    assert tm2 == tm3.find_driver_by_name('Ping1')
+    assert tm3 == tm1.find_driver_by_name('Pong1')
+    assert tm3 == tm2.find_driver_by_name('Pong1')
+    assert tm3 == tm3.find_driver_by_name('Pong1')
 
 def test_ping_pong_by_event_name(caplog):
     caplog.set_level(logging.INFO)
     tm1 = DriverGroup()
-    tm2 = tm1.add(Ping())
-    tm3 = tm1.add(Pong())
+    tm2 = tm1.add(Ping1())
+    tm3 = tm1.add(Pong1())
     assert tm3 == tm2.find_driver_by_event('receive_ball')
     assert tm2 == tm3.find_driver_by_event('receive_ball')
     assert tm2 == tm1.find_driver_by_event('receive_ball')
@@ -56,10 +57,10 @@ def test_ping_pong_level_two_tree(caplog):
     caplog.set_level(logging.INFO)
     root = DriverGroup('root')
     lft = root.add(DriverGroup('left'))
-    lft_ping = lft.add(Ping())
-    lft_pong = lft.add(Pong())
+    lft_ping = lft.add(Ping1())
+    lft_pong = lft.add(Pong1())
     rgt = root.add(DriverGroup('right'))
-    rgt_pong = rgt.add(Pong())
+    rgt_pong = rgt.add(Pong1())
     assert lft == root.find_driver_by_name('left')
     assert lft == lft.find_driver_by_name('left')
     assert lft == rgt.find_driver_by_name('left')
@@ -73,8 +74,8 @@ def test_ping_pong_level_two_tree(caplog):
     assert rgt == lft_pong.find_driver_by_name('right')
     assert rgt == rgt_pong.find_driver_by_name('right')
     assert root == root.find_driver_by_name('root')
-    assert lft_ping == rgt_pong.find_driver_by_name('Ping')
-    assert lft_pong == lft_ping.find_driver_by_name('Pong')
+    assert lft_ping == rgt_pong.find_driver_by_name('Ping1')
+    assert lft_pong == lft_ping.find_driver_by_name('Pong1')
     assert lft_ping == rgt_pong.find_driver_by_event('receive_ball')
     assert lft_ping == lft_pong.find_driver_by_event('receive_ball')
     assert lft_pong == lft_ping.find_driver_by_event('receive_ball')
@@ -92,21 +93,21 @@ def test_ping_pong_level_three_tree(caplog):
     rgt = root.add(DriverGroup('right'))
     rgt_lft = rgt.add(DriverGroup('right-left'))
     rgt_rgt = rgt.add(DriverGroup('right-right'))
-    lft_lft_ping = lft_lft.add(Ping())
-    lft_lft_pong = lft_lft.add(Pong())
-    lft_rgt_ping = lft_rgt.add(Ping())
-    lft_rgt_pong = lft_rgt.add(Pong())
-    rgt_lft_ping = rgt_lft.add(Ping())
-    rgt_lft_pong = rgt_lft.add(Pong())
+    lft_lft_ping = lft_lft.add(Ping1())
+    lft_lft_pong = lft_lft.add(Pong1())
+    lft_rgt_ping = lft_rgt.add(Ping1())
+    lft_rgt_pong = lft_rgt.add(Pong1())
+    rgt_lft_ping = rgt_lft.add(Ping1())
+    rgt_lft_pong = rgt_lft.add(Pong1())
     #
-    rgt_rgt_pong = rgt_rgt.add(Pong())
-    assert lft_lft_ping == lft_lft_pong.find_driver_by_name('Ping')
-    assert lft_lft_pong == lft_lft_ping.find_driver_by_name('Pong')
-    assert lft_rgt_ping == lft_rgt_pong.find_driver_by_name('Ping')
-    assert lft_rgt_pong == lft_rgt_ping.find_driver_by_name('Pong')
-    assert rgt_lft_ping == rgt_lft_pong.find_driver_by_name('Ping')
-    assert rgt_lft_pong == rgt_lft_ping.find_driver_by_name('Pong')
-    assert rgt_lft_ping == rgt_rgt_pong.find_driver_by_name('Ping')
+    rgt_rgt_pong = rgt_rgt.add(Pong1())
+    assert lft_lft_ping == lft_lft_pong.find_driver_by_name('Ping1')
+    assert lft_lft_pong == lft_lft_ping.find_driver_by_name('Pong1')
+    assert lft_rgt_ping == lft_rgt_pong.find_driver_by_name('Ping1')
+    assert lft_rgt_pong == lft_rgt_ping.find_driver_by_name('Pong1')
+    assert rgt_lft_ping == rgt_lft_pong.find_driver_by_name('Ping1')
+    assert rgt_lft_pong == rgt_lft_ping.find_driver_by_name('Pong1')
+    assert rgt_lft_ping == rgt_rgt_pong.find_driver_by_name('Ping1')
     assert lft_lft_ping == lft_lft_pong.find_driver_by_event('receive_ball')
     assert lft_lft_pong == lft_lft_ping.find_driver_by_event('receive_ball')
     assert lft_rgt_ping == lft_rgt_pong.find_driver_by_event('receive_ball')
@@ -124,22 +125,23 @@ def test_ping_pong_level_three_sparse(caplog):
     rgt = root.add(DriverGroup('right'))
     rgt_lft = rgt.add(DriverGroup('right-left'))
     rgt_rgt = rgt.add(DriverGroup('right-right'))
-    lft_lft_ping = lft_lft.add(Ping())
-    rgt_rgt_pong = rgt_rgt.add(Pong())
-    assert lft_lft_ping == rgt_rgt_pong.find_driver_by_name('Ping')
-    assert rgt_rgt_pong == lft_lft_ping.find_driver_by_name('Pong')
+    lft_lft_ping = lft_lft.add(Ping1())
+    rgt_rgt_pong = rgt_rgt.add(Pong1())
+    assert lft_lft_ping == rgt_rgt_pong.find_driver_by_name('Ping1')
+    assert rgt_rgt_pong == lft_lft_ping.find_driver_by_name('Pong1')
     assert lft_lft_ping == rgt_rgt_pong.find_driver_by_event('receive_ball')
     assert rgt_rgt_pong == lft_lft_ping.find_driver_by_event('receive_ball')
 
-def test_ping_pong_run(caplog):
+def test_ping_pong_run_1(caplog):
     caplog.set_level(logging.INFO)
     root = DriverGroup('root')
-    ping = root.add(Ping())
-    pong = root.add(Pong())
+    ping = root.add(Ping1())
+    pong = root.add(Pong1())
     root.setup()
     root.start()
     ping.join()
     pong.join()
+    root.teardown()
     assert ping._last_count == 1000
     assert pong._last_count == 999
 
@@ -151,12 +153,12 @@ def x_test_RunForSeconds_simple_test(caplog):
     tm1.join()
     root.teardown()
 
-def test_one_second_of_ping_pong(caplog):
+def test_one_second_of_ping_pong_1(caplog):
     caplog.set_level(logging.INFO)
     root = DriverGroup('root')
     tm1 = root.add(RunForSeconds(1.0))
-    tm2 = root.add(Ping(False))
-    tm3 = root.add(Pong())
+    tm2 = root.add(Ping1(False))
+    tm3 = root.add(Pong1())
     root.setup()
     root.start()
     tm1.join()
@@ -166,15 +168,50 @@ def test_one_second_of_ping_pong(caplog):
     logging.info(tm2._last_count)
     logging.info(tm3._last_count)
 
+def test_one_second_of_ping_pong_2(caplog):
+    caplog.set_level(logging.INFO)
+    root = DriverGroup('root')
+    rfs = root.add(RunForSeconds(1.0))
+    ping = root.add(Ping2())
+    pong = root.add(Pong1())
+    root.setup()
+    root.start()
+    rfs.join()
+    ping.join()
+    pong.join()
+    root.teardown()
+    assert ping._last_count == 1000
+    assert pong._last_count == 999
+
+def test_DeathOfRats(caplog):
+    caplog.set_level(logging.INFO)
+    root = DriverGroup('root')
+    dor = root.add(DeathOfRats(name='DeathOfRats', config=None, loader=None, id=None))
+    ping = root.add(Ping2())
+    pong = root.add(Pong1())
+    root.setup()
+    root.start()
+    time.sleep(1.0)
+    dor.stop_all()
+    dor.join()
+    # rmv logging.info('dor.join')
+    ping.join()
+    # rmv logging.info('ping.join')
+    pong.join()
+    # rmv logging.info('pong.join')
+    root.teardown()
+    assert ping._last_count == 1000
+    assert pong._last_count == 999
+
     #tm1.setup()
     #tm1.start()
     #tm2.join()
     #tm3.join()
     #assert tm2._last_count == 1000
     #assert tm3._last_count == 999
-#    rgt_ping = lft.add(Ping())
+#    rgt_ping = lft.add(Ping1())
 #startable = list()
-#tm1 = Ping()
+#tm1 = Ping1()
 #if tm1.setup():
 #    startable.append(tm1)
 
