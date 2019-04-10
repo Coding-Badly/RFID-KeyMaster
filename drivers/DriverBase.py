@@ -159,6 +159,10 @@ class DriverGroup(OrderedDict):
         for driver_or_group in self.values():
             driver_or_group.teardown()
 
+    def join(self):
+        for driver_or_group in self.values():
+            driver_or_group.join()
+
 class DriverEvent():
     def __init__(self, id, args, kwargs):
         self._id = id
