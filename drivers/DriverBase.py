@@ -335,8 +335,17 @@ class DriverBase(Thread, Dispatcher):
     #fix
     #def revoke(self):
 
+    def register(self, fileobj, events, data=None):
+        self._event_queue.register(fileobj, events, data)
+
+    def unregister(self, fileobj):
+        self._event_queue.register(fileobj)
+
     def ok_to_start(self):
         return self._ok_to_start
+
+    def dont_start(self):
+        self._ok_to_start = False
 
     def get(self, block=True, timeout=None):
         # fix: At some point _event_queue.task_done() should be called.
