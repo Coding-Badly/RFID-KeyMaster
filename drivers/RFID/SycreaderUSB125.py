@@ -22,7 +22,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers.DriverBase import DriverQueuePlusSelect, DriverBase, DriverGroup, DeathOfRats
+from drivers.DriverBase import DriverQueuePlusSelect, DriverBase
 from enum import Enum
 import evdev
 import selectors
