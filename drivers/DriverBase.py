@@ -79,6 +79,26 @@ class DriverGroup(OrderedDict):
     def has_values(self):
         return True
 
+    def _flatten(self):
+        stack = list()
+        rover = iter(self.values())
+        while True:
+            try:
+                current = next(rover)
+                if current.has_values():
+                    stack.append(rover)
+                    rover = iter(current.values())
+                else:
+                    yield current
+            except StopIteration:
+                if stack:
+                    rover = stack.pop()
+                else:
+                    break
+
+    def flatten(self):
+        return [item for item in self._flatten()]
+
     def find_driver_by_event(self, event_name, skip=None):
         # Breadth-first search down then working up.
         heap = list()
@@ -136,12 +156,15 @@ class DriverGroup(OrderedDict):
         return None
 
     def ok_to_start(self):
+        # rmv?
         for driver_or_group in self.values():
             if not driver_or_group.ok_to_start():
                 return False
         return True
 
     def setup(self):
+        # fix: Use flatten.  
+        # fix: And cache the flattened list.
         # fix? Do something with the return values?
         # fix? Fail to run if any return False?
         self._startable.clear()
@@ -151,15 +174,22 @@ class DriverGroup(OrderedDict):
                 self._startable.append(driver_or_group)
 
     def start(self):
+        # fix: Use flatten.  
+        # fix: And cache the flattened list.
+        # fix: And sort the list in start_order
         for driver_or_group in self._startable:
             driver_or_group.start()
         self._startable.clear()
 
     def teardown(self):
+        # fix: Use flatten.  
+        # fix: And cache the flattened list.
         for driver_or_group in self.values():
             driver_or_group.teardown()
 
     def join(self):
+        # fix: Use flatten.  
+        # fix: And cache the flattened list.
         for driver_or_group in self.values():
             driver_or_group.join()
 
