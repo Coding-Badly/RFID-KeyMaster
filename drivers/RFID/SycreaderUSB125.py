@@ -2,7 +2,7 @@
 
   Driver for the Sycreader 125 kHz RFID tag reader.  The device normally
   behaves like a keyboard but for this application it is treated as a raw USB
-  device.  This code will only work on Linux.  A "swipe10" event is published
+  device.  This code will only work on Linux.  A "swipe_10" event is published
   on a successful read.
 
   ----------------------------------------------------------------------------
@@ -103,7 +103,7 @@ class SycreaderParser():
         return self._timestamp
 
 class SycreaderUSB125(DriverBase):
-    _events_ = ['swipe10']
+    _events_ = ['swipe_10']
     def _create_event_queue(self):
         return DriverQueuePlusSelect()
     def setup(self):
@@ -119,7 +119,7 @@ class SycreaderUSB125(DriverBase):
             if cooked.keystate == cooked.key_up:
                 rv = self._parser.process(cooked)
                 if rv == ParserStatus.FINI:
-                    self.publish('swipe10', self._parser.timestamp, self._parser.rfid)
+                    self.publish('swipe_10', self._parser.timestamp, self._parser.rfid)
                     # rmv print(self._parser.timestamp, self._parser.rfid)
                     # rmv self.target.got_swipe(self.parser)
                 # ParserStatus.ERROR
