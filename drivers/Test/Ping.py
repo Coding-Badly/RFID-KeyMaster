@@ -24,14 +24,14 @@
 from drivers.DriverBase import DriverBase
 import queue
 
-class Ping(DriverBase):
+class Ping1(DriverBase):
     _events_ = ['receive_ball']
     def __init__(self, stop_at_1000 = True):
-        super().__init__('Ping', None, None, None)
+        super().__init__('Ping1', None, None, None)
         self._stop_at_1000 = stop_at_1000
     def setup(self):
         super().setup()
-        self.subscribe('Pong', 'receive_ball', 13)
+        self.subscribe('Pong1', 'receive_ball', 13)
         self._last_count = None
         return True  # rmv
     def startup(self):
@@ -41,7 +41,7 @@ class Ping(DriverBase):
         try:
             event = self.get(timeout=0.100)
             if callable(event.id):
-                event.id(event)
+                event.id(*event.args, **event.kwargs)
             else:
                 if event.id == 13:
                     count = event.args[0]
@@ -52,3 +52,21 @@ class Ping(DriverBase):
         except queue.Empty:
             pass
         return False
+
+class Ping2(DriverBase):
+    _events_ = ['receive_ball']
+    def __init__(self, stop_at_1000 = True):
+        super().__init__('Ping2', None, None, None)
+        self._stop_at_1000 = stop_at_1000
+    def setup(self):
+        super().setup()
+        self.subscribe(None, 'receive_ball', self.receive_ball)
+        self._last_count = None
+    def startup(self):
+        super().startup()
+        self.publish('receive_ball', 1)
+    def receive_ball(self, count):
+        self._last_count = count
+        if (not self._stop_at_1000) or (count < 1000):
+            self.publish('receive_ball', count+1)
+

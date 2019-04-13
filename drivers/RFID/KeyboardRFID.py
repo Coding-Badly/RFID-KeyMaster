@@ -2,7 +2,7 @@
 
   KeyboardRFID for RFID-KeyMaster.  KeyboardRFID is responsible for turning
   RIFD reads from a Sycreader into events.
-  
+
   ----------------------------------------------------------------------------
 
   Copyright 2019 Mike Cole (aka @Draco, MikeColeGuru)

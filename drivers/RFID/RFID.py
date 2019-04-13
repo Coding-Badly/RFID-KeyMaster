@@ -1,7 +1,7 @@
 """=============================================================================
 
   RFID for RFID-KeyMaster.  RFID is the base class for RFID readers.
-  
+
   ----------------------------------------------------------------------------
 
   Copyright 2019 Mike Cole (aka @Draco, MikeColeGuru)

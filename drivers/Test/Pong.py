@@ -22,12 +22,13 @@
 
 ============================================================================="""
 from drivers.DriverBase import DriverBase
+import logging
 import queue
 
-class Pong(DriverBase):
+class Pong1(DriverBase):
     _events_ = ['receive_ball']
     def __init__(self):
-        super().__init__('Pong', None, None, None)
+        super().__init__('Pong1', None, None, None)
     def setup(self):
         super().setup()
         self.subscribe(None, 'receive_ball', self.receive_ball)
@@ -36,18 +37,11 @@ class Pong(DriverBase):
     def loop(self):
         try:
             event = self.get(timeout=0.100)
-            #callable(event.id)
-            if event.id == 13:
-                count = event.args[0]
-                self._last_count = count
-                self.publish('receive_ball', count+1)
-            else:
-                event.id(event)
+            event.id(*event.args, **event.kwargs)
             return True
         except queue.Empty:
             pass
         return False
-    def receive_ball(self, event):
-        count = event.args[0]
+    def receive_ball(self, count):
         self._last_count = count
         self.publish('receive_ball', count+1)
