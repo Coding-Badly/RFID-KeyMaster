@@ -1,4 +1,6 @@
 
+import selectors
+
 selector = selectors.DefaultSelector()
 
 device = evdev.InputDevice('/dev/input/by-id/usb-Sycreader_USB_Reader_08FF20150112-event-kbd')

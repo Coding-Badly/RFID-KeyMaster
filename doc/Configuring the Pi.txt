@@ -1,0 +1,6 @@
+
+RFID-KeyMaster Startup...
+https://www.google.com/search?q=systemd+startup+last
+https://www.mauras.ch/systemd-run-it-last.html
+https://raspberrypi.stackexchange.com/questions/84892/run-python-script-at-startup-with-systemd-service
+
