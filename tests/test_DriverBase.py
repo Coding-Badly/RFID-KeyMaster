@@ -203,15 +203,34 @@ def test_DeathOfRats(caplog):
     assert ping._last_count == 1000
     assert pong._last_count == 999
 
-    #tm1.setup()
-    #tm1.start()
-    #tm2.join()
-    #tm3.join()
-    #assert tm2._last_count == 1000
-    #assert tm3._last_count == 999
-#    rgt_ping = lft.add(Ping1())
-#startable = list()
-#tm1 = Ping1()
-#if tm1.setup():
-#    startable.append(tm1)
+def test_flatten_1(caplog):
+    root = DriverGroup('root')
+    assert root.flatten() == []
+
+def test_flatten_2(caplog):
+    root = DriverGroup('root')
+    lft = root.add(DriverGroup('left'))
+    lft_ping = lft.add(Ping1())
+    lft_pong = lft.add(Pong1())
+    rgt = root.add(DriverGroup('right'))
+    rgt_pong = rgt.add(Pong1())
+    assert root.flatten() == [lft_ping, lft_pong, rgt_pong]
+
+def test_flatten_3(caplog):
+    root = DriverGroup('root')
+    lft = root.add(DriverGroup('left'))
+    lft_lft = lft.add(DriverGroup('left-left'))
+    lft_rgt = lft.add(DriverGroup('left-right'))
+    rgt = root.add(DriverGroup('right'))
+    rgt_lft = rgt.add(DriverGroup('right-left'))
+    rgt_rgt = rgt.add(DriverGroup('right-right'))
+    lft_lft_ping = lft_lft.add(Ping1())
+    lft_lft_pong = lft_lft.add(Pong1())
+    lft_rgt_ping = lft_rgt.add(Ping1())
+    lft_rgt_pong = lft_rgt.add(Pong1())
+    rgt_lft_ping = rgt_lft.add(Ping1())
+    rgt_lft_pong = rgt_lft.add(Pong1())
+    #rgt_rgt_ping = rgt_rgt.add(Ping1())
+    rgt_rgt_pong = rgt_rgt.add(Pong1())
+    assert root.flatten() == [lft_lft_ping, lft_lft_pong, lft_rgt_ping, lft_rgt_pong, rgt_lft_ping, rgt_lft_pong, rgt_rgt_pong]
 

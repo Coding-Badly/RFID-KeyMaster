@@ -34,6 +34,8 @@ class Ping1(DriverBase):
         self.subscribe('Pong1', 'receive_ball', 13)
         self._last_count = None
         return True  # rmv
+    def startup_order(self):
+        return 70
     def startup(self):
         super().startup()
         self.publish('receive_ball', 1)
@@ -62,6 +64,8 @@ class Ping2(DriverBase):
         super().setup()
         self.subscribe(None, 'receive_ball', self.receive_ball)
         self._last_count = None
+    def startup_order(self):
+        return 70
     def startup(self):
         super().startup()
         self.publish('receive_ball', 1)

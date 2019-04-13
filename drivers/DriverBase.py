@@ -27,10 +27,12 @@
 ============================================================================="""
 from collections import OrderedDict
 from threading import Thread
+from exceptions.DriverWontStartError import DriverWontStartError
 from exceptions.RequiredDriverException import RequiredDriverException
 from exceptions.RequiredEventException import RequiredEventException
 import heapq
 import logging
+from operator import methodcaller
 import os
 from pydispatch import Dispatcher
 import queue
@@ -60,6 +62,7 @@ class DriverGroup(OrderedDict):
         super().__init__()
         self._parent = None
         self._name = name if name else get_next_name()
+        self._flattened = None
         self._startable = list()
 
     @property
@@ -69,6 +72,7 @@ class DriverGroup(OrderedDict):
     def add(self, driver_or_group):
         assert (driver_or_group._parent == default_driver_parent) \
                 or (driver_or_group._parent is None)
+        assert self._flattened is None
         self[driver_or_group.name] = driver_or_group
         driver_or_group._parent = self
         return driver_or_group
@@ -98,6 +102,11 @@ class DriverGroup(OrderedDict):
 
     def flatten(self):
         return [item for item in self._flatten()]
+
+    def _check_flattened(self):
+        if self._flattened is None:
+            self._flattened = self.flatten()
+        return self._flattened
 
     def find_driver_by_event(self, event_name, skip=None):
         # Breadth-first search down then working up.
@@ -163,35 +172,47 @@ class DriverGroup(OrderedDict):
         return True
 
     def setup(self):
+        for driver in self._check_flattened():
+            driver.setup()
         # fix: Use flatten.  
         # fix: And cache the flattened list.
         # fix? Do something with the return values?
         # fix? Fail to run if any return False?
-        self._startable.clear()
-        for driver_or_group in self.values():
-            driver_or_group.setup()
-            if driver_or_group.ok_to_start():
-                self._startable.append(driver_or_group)
+        # rmv self._startable.clear()
+        # rmv for driver_or_group in self.values():
+        # rmv     driver_or_group.setup()
+        # rmv     if driver_or_group.ok_to_start():
+        # rmv         self._startable.append(driver_or_group)
 
     def start(self):
+        drivers_in_startup_order = sorted(self._check_flattened(), key=methodcaller('startup_order'))
+        not_ok_to_start = [driver for driver in drivers_in_startup_order if not driver.ok_to_start()]
+        if not_ok_to_start:
+            raise DriverWontStartError(not_ok_to_start)
+        for driver in drivers_in_startup_order:
+            driver.start()
         # fix: Use flatten.  
         # fix: And cache the flattened list.
         # fix: And sort the list in start_order
-        for driver_or_group in self._startable:
-            driver_or_group.start()
-        self._startable.clear()
+        # rmv for driver_or_group in self._startable:
+        # rmv     driver_or_group.start()
+        # rmv self._startable.clear()
 
     def teardown(self):
+        for driver in self._check_flattened():
+            driver.teardown()
         # fix: Use flatten.  
         # fix: And cache the flattened list.
-        for driver_or_group in self.values():
-            driver_or_group.teardown()
+        # rmv for driver_or_group in self.values():
+        # rmv     driver_or_group.teardown()
 
     def join(self):
+        for driver in self._check_flattened():
+            driver.join()
         # fix: Use flatten.  
         # fix: And cache the flattened list.
-        for driver_or_group in self.values():
-            driver_or_group.join()
+        # rmv for driver_or_group in self.values():
+        # rmv     driver_or_group.join()
 
 class DriverEvent():
     def __init__(self, id, args, kwargs):
@@ -403,6 +424,9 @@ class DriverBase(Thread, Dispatcher):
         self.subscribe(None, DriverBase.EVENT_STOP_NOW, self._stop_now, False, False)
         return False  # rmv
 
+    def startup_order(self):
+        return 50
+
     def startup(self):
         self._keep_running = self._ok_to_start
 
@@ -442,6 +466,8 @@ class DriverBase(Thread, Dispatcher):
 
 class DeathOfRats(DriverBase):
     _events_ = [DriverBase.EVENT_STOP_NOW]
+    def startup_order(self):
+        return 99
     def stop_all(self):
         # rmv logger.info('DeathOfRats.stop_now...')
         self.publish(DriverBase.EVENT_STOP_NOW)
