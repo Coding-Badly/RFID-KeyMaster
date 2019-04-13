@@ -112,6 +112,8 @@ class SycreaderUSB125(DriverBase):
         self._device = find_el_cheapo_rfid_reader()[0]
         self._parser = SycreaderParser()
         self.register(self._device, selectors.EVENT_READ, self.process)
+    def start_order(self):
+        return 90
     def startup(self):
         super().startup()
         self.open_for_business()

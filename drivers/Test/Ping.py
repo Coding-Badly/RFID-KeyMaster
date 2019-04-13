@@ -37,7 +37,7 @@ class PingN(DriverBase):
     def setup(self):
         super().setup()
         self._last_count = None
-    def startup_order(self):
+    def start_order(self):
         return 70
 
 class Ping1(PingN):

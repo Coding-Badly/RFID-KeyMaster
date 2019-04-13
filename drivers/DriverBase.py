@@ -185,11 +185,11 @@ class DriverGroup(OrderedDict):
         # rmv         self._startable.append(driver_or_group)
 
     def start(self):
-        drivers_in_startup_order = sorted(self._check_flattened(), key=methodcaller('startup_order'))
-        not_ok_to_start = [driver for driver in drivers_in_startup_order if not driver.ok_to_start()]
+        drivers_in_start_order = sorted(self._check_flattened(), key=methodcaller('start_order'))
+        not_ok_to_start = [driver for driver in drivers_in_start_order if not driver.ok_to_start()]
         if not_ok_to_start:
             raise DriverWontStartError(not_ok_to_start)
-        for driver in drivers_in_startup_order:
+        for driver in drivers_in_start_order:
             driver.start_and_wait()
         # fix: Use flatten.  
         # fix: And cache the flattened list.
@@ -432,7 +432,7 @@ class DriverBase(Thread, Dispatcher):
         self.subscribe(None, DriverBase.EVENT_STOP_NOW, self._stop_now, False, False)
         return False  # rmv
 
-    def startup_order(self):
+    def start_order(self):
         return 50
 
     def startup(self):
@@ -474,7 +474,7 @@ class DriverBase(Thread, Dispatcher):
 
 class DeathOfRats(DriverBase):
     _events_ = [DriverBase.EVENT_STOP_NOW]
-    def startup_order(self):
+    def start_order(self):
         return 99
     def startup(self):
         super().startup()
