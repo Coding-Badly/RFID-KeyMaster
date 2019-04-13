@@ -24,18 +24,27 @@
 from drivers.DriverBase import DriverBase
 import queue
 
-class Ping1(DriverBase):
+class PingN(DriverBase):
     _events_ = ['receive_ball']
-    def __init__(self, stop_at_1000 = True):
-        super().__init__('Ping1', None, None, None)
+    def __init__(self, name_to_use=None, stop_at_1000=True):
+        if name_to_use is None:
+            name_to_use = type(self).__name__
+        super().__init__(name_to_use, None, None, None)
         self._stop_at_1000 = stop_at_1000
+    def startup(self):
+        super().startup()
+        self.open_for_business()
+    def setup(self):
+        super().setup()
+        self._last_count = None
+    def startup_order(self):
+        return 70
+
+class Ping1(PingN):
     def setup(self):
         super().setup()
         self.subscribe('Pong1', 'receive_ball', 13)
-        self._last_count = None
         return True  # rmv
-    def startup_order(self):
-        return 70
     def startup(self):
         super().startup()
         self.publish('receive_ball', 1)
@@ -55,17 +64,10 @@ class Ping1(DriverBase):
             pass
         return False
 
-class Ping2(DriverBase):
-    _events_ = ['receive_ball']
-    def __init__(self, stop_at_1000 = True):
-        super().__init__('Ping2', None, None, None)
-        self._stop_at_1000 = stop_at_1000
+class Ping2(PingN):
     def setup(self):
         super().setup()
         self.subscribe(None, 'receive_ball', self.receive_ball)
-        self._last_count = None
-    def startup_order(self):
-        return 70
     def startup(self):
         super().startup()
         self.publish('receive_ball', 1)

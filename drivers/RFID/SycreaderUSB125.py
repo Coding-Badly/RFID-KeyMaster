@@ -112,6 +112,9 @@ class SycreaderUSB125(DriverBase):
         self._device = find_el_cheapo_rfid_reader()[0]
         self._parser = SycreaderParser()
         self.register(self._device, selectors.EVENT_READ, self.process)
+    def startup(self):
+        super().startup()
+        self.open_for_business()
     def process(self, selector_key, mask):
         event = selector_key.fileobj.read_one()
         if event.type == evdev.ecodes.EV_KEY:
@@ -120,10 +123,7 @@ class SycreaderUSB125(DriverBase):
                 rv = self._parser.process(cooked)
                 if rv == ParserStatus.FINI:
                     self.publish('swipe_10', self._parser.timestamp, self._parser.rfid)
-                    # rmv print(self._parser.timestamp, self._parser.rfid)
-                    # rmv self.target.got_swipe(self.parser)
                 # ParserStatus.ERROR
-        # rmv print(evdev.categorize(event), mask)
     def teardown(self):
         super().teardown()
         self._device = None

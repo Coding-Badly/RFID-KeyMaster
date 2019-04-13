@@ -30,6 +30,10 @@ class WontStart(DriverBase):
     def __init__(self):
         super().__init__('WontStart', None, None, None)
     def setup(self):
+        super().setup()
         logger.error('Refusing to start for no particular reason.')
         self.dont_start()
+    def startup(self):
+        super().startup()
+        self.open_for_business()
 

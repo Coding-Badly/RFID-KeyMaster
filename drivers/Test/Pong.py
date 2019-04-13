@@ -3,7 +3,7 @@
   Pong for RFID-KeyMaster testing.  Ping and Pong are meant to test the
   threading and messaging of RFID-KeyMaster.  The two simply pass an event back
   and forth.
-  
+
   ----------------------------------------------------------------------------
 
   Copyright 2019 Brian Cook (aka Coding-Badly)
@@ -25,15 +25,23 @@ from drivers.DriverBase import DriverBase
 import logging
 import queue
 
-class Pong1(DriverBase):
+class PongN(DriverBase):
     _events_ = ['receive_ball']
-    def __init__(self):
-        super().__init__('Pong1', None, None, None)
+    def __init__(self, name_to_use=None):
+        if name_to_use is None:
+            name_to_use = type(self).__name__
+        super().__init__(name_to_use, None, None, None)
+    def startup(self):
+        super().startup()
+        self.open_for_business()
+    def setup(self):
+        super().setup()
+        self._last_count = None
+
+class Pong1(PongN):
     def setup(self):
         super().setup()
         self.subscribe(None, 'receive_ball', self.receive_ball)
-        self._last_count = None
-        return True  # rmv
     def loop(self):
         try:
             event = self.get(timeout=0.100)

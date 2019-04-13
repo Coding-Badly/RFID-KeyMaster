@@ -30,5 +30,7 @@ class RunForSeconds(DeathOfRats):
         self._seconds = seconds
     def loop(self):
         self.process_one(timeout=self._seconds)
+        while self.process_one(timeout=0):
+            pass
         return False
 

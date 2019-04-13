@@ -6,7 +6,7 @@
   three services: 1. Connection to configuration data and a parent; 2. Find
   siblings so drivers can interact directly with each other; 3. Turn all
   unexpected exceptions into a clean exit.
-  
+
   ----------------------------------------------------------------------------
 
   Copyright 2019 Mike Cole (aka @Draco, MikeColeGuru)
@@ -26,7 +26,7 @@
 
 ============================================================================="""
 from collections import OrderedDict
-from threading import Thread
+from threading import Thread, Event
 from exceptions.DriverWontStartError import DriverWontStartError
 from exceptions.RequiredDriverException import RequiredDriverException
 from exceptions.RequiredEventException import RequiredEventException
@@ -190,7 +190,7 @@ class DriverGroup(OrderedDict):
         if not_ok_to_start:
             raise DriverWontStartError(not_ok_to_start)
         for driver in drivers_in_startup_order:
-            driver.start()
+            driver.start_and_wait()
         # fix: Use flatten.  
         # fix: And cache the flattened list.
         # fix: And sort the list in start_order
@@ -418,9 +418,17 @@ class DriverBase(Thread, Dispatcher):
     def _create_event_queue(self):
         return DriverQueue()
 
+    def open_for_business(self):
+        self._open_for_business.set()
+
+    def start_and_wait(self):
+        self.start()
+        self._open_for_business.wait()
+
     def setup(self):
         self._event_queue = self._create_event_queue()
         self._event_queue.setup()
+        self._open_for_business = Event()
         self.subscribe(None, DriverBase.EVENT_STOP_NOW, self._stop_now, False, False)
         return False  # rmv
 
@@ -468,6 +476,9 @@ class DeathOfRats(DriverBase):
     _events_ = [DriverBase.EVENT_STOP_NOW]
     def startup_order(self):
         return 99
+    def startup(self):
+        super().startup()
+        self.open_for_business()
     def stop_all(self):
         # rmv logger.info('DeathOfRats.stop_now...')
         self.publish(DriverBase.EVENT_STOP_NOW)
