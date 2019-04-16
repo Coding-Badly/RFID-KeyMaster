@@ -3,7 +3,7 @@
   RunForSeconds for RFID-KeyMaster testing.  RunForSeconds is a driver that
   runs for a specified number of seconds then requests all other Drivers 
   terminate.
-  
+
   ----------------------------------------------------------------------------
 
   Copyright 2019 Brian Cook (aka Coding-Badly)
@@ -22,15 +22,14 @@
 
 ============================================================================="""
 from drivers.DriverBase import DriverBase, DeathOfRats
-import queue
+# import logging
+
+# logger = logging.getLogger(__name__)
 
 class RunForSeconds(DeathOfRats):
     def __init__(self, seconds):
         super().__init__('RunForSeconds', None, None, None)
         self._seconds = seconds
-    def loop(self):
-        self.process_one(timeout=self._seconds)
-        while self.process_one(timeout=0):
-            pass
-        return False
-
+    def startup(self):
+        super().startup()
+        self.call_after(self._seconds, self._stop_now)

@@ -1,7 +1,7 @@
 """=============================================================================
 
   pytest for DriverBaseOld.
-  
+
   ----------------------------------------------------------------------------
 
   Copyright 2019 Brian Cook (aka Coding-Badly)
@@ -40,7 +40,7 @@ class LoaderStub2():
 def test_simple_construction():
     tm1 = DriverBaseOld(None, None, None)
 
-def test_stubs():
+def rmv_test_stubs():
     tm1 = DriverBaseOld(None, None, None)
     assert tm1.setup() == False
     assert tm1.loop() == False

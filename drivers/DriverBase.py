@@ -37,7 +37,7 @@ import os
 from pydispatch import Dispatcher
 import queue
 import selectors
-from time import monotonic as time
+from time import monotonic
 
 logger = logging.getLogger(__name__)
 
@@ -164,25 +164,9 @@ class DriverGroup(OrderedDict):
             return self
         return None
 
-    def ok_to_start(self):
-        # rmv?
-        for driver_or_group in self.values():
-            if not driver_or_group.ok_to_start():
-                return False
-        return True
-
     def setup(self):
         for driver in self._check_flattened():
             driver.setup()
-        # fix: Use flatten.  
-        # fix: And cache the flattened list.
-        # fix? Do something with the return values?
-        # fix? Fail to run if any return False?
-        # rmv self._startable.clear()
-        # rmv for driver_or_group in self.values():
-        # rmv     driver_or_group.setup()
-        # rmv     if driver_or_group.ok_to_start():
-        # rmv         self._startable.append(driver_or_group)
 
     def start(self):
         drivers_in_start_order = sorted(self._check_flattened(), key=methodcaller('start_order'))
@@ -191,28 +175,14 @@ class DriverGroup(OrderedDict):
             raise DriverWontStartError(not_ok_to_start)
         for driver in drivers_in_start_order:
             driver.start_and_wait()
-        # fix: Use flatten.  
-        # fix: And cache the flattened list.
-        # fix: And sort the list in start_order
-        # rmv for driver_or_group in self._startable:
-        # rmv     driver_or_group.start()
-        # rmv self._startable.clear()
 
     def teardown(self):
         for driver in self._check_flattened():
             driver.teardown()
-        # fix: Use flatten.  
-        # fix: And cache the flattened list.
-        # rmv for driver_or_group in self.values():
-        # rmv     driver_or_group.teardown()
 
     def join(self):
         for driver in self._check_flattened():
             driver.join()
-        # fix: Use flatten.  
-        # fix: And cache the flattened list.
-        # rmv for driver_or_group in self.values():
-        # rmv     driver_or_group.join()
 
 class DriverEvent():
     def __init__(self, id, args, kwargs):
@@ -231,6 +201,30 @@ class DriverEvent():
     def kwargs(self):
         return self._kwargs
 
+class DriverTimelet():
+    def __init__(self, first_due, payload):
+        self.when_due = first_due
+        self._payload = payload
+    # fix? active? enabled?
+    def expired(self):
+        # rmv print(monotonic()-mark)
+        pass
+    @property
+    def payload(self):
+        return self._payload
+    def __lt__(self, other):
+        return self.when_due < other.when_due
+    def __le__(self, other):
+        return self.when_due <= other.when_due
+    def __gt__(self, other):
+        return self.when_due > other.when_due
+    def __ge__(self, other):
+        return self.when_due >= other.when_due
+    def __eq__(self, other):
+        return self.when_due == other.when_due
+    def __ne__(self, other):
+        return self.when_due != other.when_due
+
 class DriverThunk():
     def __init__(self, dispatcher, event_name, id, event_queue):
         super().__init__()
@@ -239,7 +233,6 @@ class DriverThunk():
         dispatcher_arg = { event_name: self.thunk }
         dispatcher.bind(**dispatcher_arg)
     def thunk(self, *args, **kwargs):
-        # rmv logger.info('DriverThunk.thunk: %s, %s', args, kwargs)
         event = DriverEvent(self._id, args, kwargs)
         self._event_queue.put(event)
         return True
@@ -257,9 +250,7 @@ class DriverQueuePlusSelect():
     def setup(self):
         self._selector = selectors.DefaultSelector()
         self._wake_pipe_read, self._wake_pipe_write = os.pipe()
-        # rmv self.register = self._selector.register
-        # rmv self.unregister = self._selector.unregister
-        self.register(self._wake_pipe_read, selectors.EVENT_READ, None) # rmv EmptyPipe())
+        self.register(self._wake_pipe_read, selectors.EVENT_READ, None)
     def register(self, fileobj, events, data=None):
         # fix? Add support for auto-close?
         self._selector.register(fileobj, events, data)
@@ -298,7 +289,7 @@ class DriverQueuePlusSelect():
             # Timeout?
             if tries > 1:
                 if select_timeout is not None:
-                    remaining = endtime - time()
+                    remaining = endtime - monotonic()
                     if remaining <= 0.0:
                         raise queue.Empty
             # If we are supposed to block forever then adjust and loop.
@@ -309,7 +300,7 @@ class DriverQueuePlusSelect():
             else:
                 select_timeout = timeout
                 if tries == 1:
-                    endtime = time() + timeout
+                    endtime = monotonic() + timeout
                 continue
     def teardown(self):
         self.unregister(self._wake_pipe_read)
@@ -331,7 +322,6 @@ class DriverBase(Thread, Dispatcher):
         self.config = config
         self.loader = loader
         self.id = id
-        # rmv self._event_queue = DriverQueue()
         self._event_thunks = list()
         # fix: Use the following instead of returning a Boolean from setup.
         self._ok_to_start = True
@@ -379,7 +369,6 @@ class DriverBase(Thread, Dispatcher):
                     raise RequiredDriverException(driver_name)
                 else:
                     return False
-        # rmv logger.info('self=%s, partner=%s, event_name=%s', self, partner, event_name)
         thunk = DriverThunk(partner, event_name, id, self._event_queue)
         self._event_thunks.append(thunk)
         return True
@@ -389,6 +378,11 @@ class DriverBase(Thread, Dispatcher):
 
     #fix
     #def revoke(self):
+
+    def call_after(self, seconds, method, *args, **kwargs):
+        event = DriverEvent(method, args, kwargs)
+        timelet = DriverTimelet(monotonic()+seconds, event)
+        heapq.heappush(self._timelets, timelet)
 
     def register(self, fileobj, events, data=None):
         self._event_queue.register(fileobj, events, data)
@@ -406,14 +400,25 @@ class DriverBase(Thread, Dispatcher):
         # fix: At some point _event_queue.task_done() should be called.
         return self._event_queue.get(block=block, timeout=timeout)
 
-    def process_one(self, timeout=None):
-        try:
-            event = self._event_queue.get(block=True, timeout=timeout)
-            event.id(*event.args, **event.kwargs)
-            return True
-        except queue.Empty:
-            pass
-        return False
+    def process_one(self):
+        while True:
+            timeout = None
+            while self._timelets:
+                delta_to_next_due = self._timelets[0].when_due - monotonic()
+                if delta_to_next_due > 0:
+                    timeout = delta_to_next_due
+                    break
+                else:
+                    timelet = heapq.heappop(self._timelets)
+                    self._event_queue.put(timelet.payload)
+                    # fix: The following should return a value that indicates the timelet has been rescheduled.
+                    timelet.expired()
+            try:
+                event = self._event_queue.get(block=True, timeout=timeout)
+                event.id(*event.args, **event.kwargs)
+                return True
+            except queue.Empty:
+                pass
 
     def _create_event_queue(self):
         return DriverQueue()
@@ -428,9 +433,9 @@ class DriverBase(Thread, Dispatcher):
     def setup(self):
         self._event_queue = self._create_event_queue()
         self._event_queue.setup()
+        self._timelets = list()
         self._open_for_business = Event()
         self.subscribe(None, DriverBase.EVENT_STOP_NOW, self._stop_now, False, False)
-        return False  # rmv
 
     def start_order(self):
         return 50
@@ -451,20 +456,22 @@ class DriverBase(Thread, Dispatcher):
 
     def teardown(self):
         # fix: Teardown is currently not used.  This method is the inverse of
-        # setup.  Whatever is down in setup should be undone in teardown.  If
+        # setup.  Whatever is done in setup should be undone in teardown.  If
         # this method is ever brought into play it will be called in the same
         # basic fashion as setup.
         self._event_queue.teardown()
+        self._event_queue = None
+        self._timelets = None
+        # fix: What can be done with _open_for_business?
+        # fix: If revoke is added then reverse the subscribe to EVENT_STOP_NOW
 
     def run(self):
         try:
             self.startup()
-            # rmv self.startup = True
             try:
                 while self._keep_running:
                     if not self.loop():
                         self._keep_running = False
-                    # rmv self.startup = False
             finally:
                 self.shutdown()
         except Exception as e:
@@ -480,9 +487,7 @@ class DeathOfRats(DriverBase):
         super().startup()
         self.open_for_business()
     def stop_all(self):
-        # rmv logger.info('DeathOfRats.stop_now...')
         self.publish(DriverBase.EVENT_STOP_NOW)
-        # rmv logger.info('...DeathOfRats.stop_now')
     def shutdown(self):
         super().shutdown()
         self.publish(DriverBase.EVENT_STOP_NOW)
