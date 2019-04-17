@@ -5,7 +5,7 @@
   The goal is to as reliably as possible maintain a persistent cache.  In the
   case of RFID-KeyMaster, the cache contains ActiveDirectory account and group
   data that is used to deny / allow access to a resource.
-  
+
   ----------------------------------------------------------------------------
 
   This code is a drop in replacement for the Python open function except that

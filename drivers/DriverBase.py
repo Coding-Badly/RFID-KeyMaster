@@ -202,28 +202,42 @@ class DriverEvent():
         return self._kwargs
 
 class DriverTimelet():
-    def __init__(self, first_due, payload):
-        self.when_due = first_due
+    def __init__(self, payload, first_due):
         self._payload = payload
+        self._when_due = first_due
     # fix? active? enabled?
     def expired(self):
-        # rmv print(monotonic()-mark)
-        pass
+        return False
     @property
     def payload(self):
         return self._payload
+    @property
+    def when_due(self):
+        return self._when_due
     def __lt__(self, other):
-        return self.when_due < other.when_due
+        return self._when_due < other._when_due
     def __le__(self, other):
-        return self.when_due <= other.when_due
+        return self._when_due <= other._when_due
     def __gt__(self, other):
-        return self.when_due > other.when_due
+        return self._when_due > other._when_due
     def __ge__(self, other):
-        return self.when_due >= other.when_due
+        return self._when_due >= other._when_due
     def __eq__(self, other):
-        return self.when_due == other.when_due
+        return self._when_due == other._when_due
     def __ne__(self, other):
-        return self.when_due != other.when_due
+        return self._when_due != other._when_due
+
+class DriverTimeletInterval(DriverTimelet):
+    def __init__(self, payload, every, fire_now=False):
+        if fire_now:
+            first_due = monotonic()
+        else:
+            first_due = monotonic() + every
+        super().__init__(payload, first_due)
+        self._every = every
+    def expired(self):
+        self._when_due += self._every
+        return True
 
 class DriverThunk():
     def __init__(self, dispatcher, event_name, id, event_queue):
@@ -379,9 +393,19 @@ class DriverBase(Thread, Dispatcher):
     #fix
     #def revoke(self):
 
-    def call_after(self, seconds, method, *args, **kwargs):
+    def call_after(self, after, method, *args, **kwargs):
         event = DriverEvent(method, args, kwargs)
-        timelet = DriverTimelet(monotonic()+seconds, event)
+        timelet = DriverTimelet(event, monotonic()+after)
+        heapq.heappush(self._timelets, timelet)
+
+    def call_every(self, every, method, *args, **kwargs):
+        event = DriverEvent(method, args, kwargs)
+        fire_now = kwargs.get('fire_now', None)
+        if fire_now is not None:
+            del kwargs['fire_now']
+        else:
+            fire_now = False
+        timelet = DriverTimeletInterval(event, every, fire_now)
         heapq.heappush(self._timelets, timelet)
 
     def register(self, fileobj, events, data=None):
@@ -411,8 +435,8 @@ class DriverBase(Thread, Dispatcher):
                 else:
                     timelet = heapq.heappop(self._timelets)
                     self._event_queue.put(timelet.payload)
-                    # fix: The following should return a value that indicates the timelet has been rescheduled.
-                    timelet.expired()
+                    if timelet.expired():
+                        heapq.heappush(self._timelets, timelet)
             try:
                 event = self._event_queue.get(block=True, timeout=timeout)
                 event.id(*event.args, **event.kwargs)

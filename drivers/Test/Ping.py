@@ -31,12 +31,12 @@ class PingN(DriverBase):
             name_to_use = type(self).__name__
         super().__init__(name_to_use, None, None, None)
         self._stop_at_1000 = stop_at_1000
-    def startup(self):
-        super().startup()
-        self.open_for_business()
     def setup(self):
         super().setup()
         self._last_count = None
+    def startup(self):
+        super().startup()
+        self.open_for_business()
     def start_order(self):
         return 70
 
