@@ -42,6 +42,7 @@
 
 ============================================================================="""
 from drivers.DriverBase import DriverBase
+import json
 import logging
 import requests
 
@@ -66,12 +67,15 @@ class MemberDataFreshener(DriverBase):
         with self._session as s:
           response = s.get(self._remote_cache_url, headers=self._request_headers)  # fix: verify=False
         if response.status_code == requests.codes.ok:
-            data = response.json()
-            self.publish(MemberDataFreshener.FRESH_DATA, data)
-            logger.info('Fresh member data published.')
-            etag = fix_etag(response.headers)
-            logger.info('etag = %s.', etag)
-            self._request_headers['If-None-Match'] = etag
+            try:
+                data = response.json()
+                self.publish(MemberDataFreshener.FRESH_DATA, data)
+                logger.info('Fresh member data published.')
+                etag = fix_etag(response.headers)
+                logger.info('etag = %s.', etag)
+                self._request_headers['If-None-Match'] = etag
+            except json.decoder.JSONDecodeError as exc:
+                logger.exception('Unable to parse member data.')
         elif response.status_code == requests.codes.not_modified:
             logger.info('Member data has not changed since the last publication.')
             pass
