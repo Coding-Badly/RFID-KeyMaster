@@ -36,19 +36,6 @@ User=root
 WantedBy=multi-user.target
 EOL
 
-# echo 'pi:newpassword' | chpasswd
-# echo "linuxpassword" | passwd --stdin linuxuser
-
-#cat > $KMS_ROOT/kms.py << EOL
-#import pathlib
-#import subprocess
-#import time
-#time.sleep(10.0)
-#subprocess.run(['apt-get','-y','update'])
-#subprocess.run(['apt-get','-y','upgrade'])
-#subprocess.run(['systemctl','disable','kms.service'])
-#EOL
-
 # Fetch the actual code.
 curl -s "https://raw.githubusercontent.com/Coding-Badly/RFID-KeyMaster/006/develop/brian/pi/kms.py" > $KMS_ROOT/kms.py
 
