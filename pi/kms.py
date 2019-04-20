@@ -25,10 +25,13 @@ curl -s "https://raw.githubusercontent.com/Coding-Badly/RFID-KeyMaster/006/devel
   limitations under the License.
 
 ============================================================================="""
+import json
+import os
 import pathlib
 import requests
 import subprocess
 import time
+import uuid
 
 class CurrentStepManager():
     def __init__(self):
@@ -68,12 +71,22 @@ def simple_get(source_url, destination_path):
         for chunk in r.iter_content(64*1024):
             f.write(chunk)
 
-need_reboot = False
+def check_global_config():
+    global global_config
+    if path_kms_json.exists():
+        with path_kms_json.open() as f:
+            global_config = json.load(f)
+    else:
+        global_config = dict()
 
 csm = CurrentStepManager()
 
-go_again = True
+path_kms_json = pathlib.Path('kms.json')
+check_global_config()
 
+need_reboot = False
+
+go_again = True
 while go_again:
     go_again = False
     if csm.get_current_step() == 1:
@@ -95,12 +108,23 @@ while go_again:
         go_again = True
         csm.increment_current_step()
     elif csm.get_current_step() == 4:
-        wall_and_print('Step #4: Install Python support for generating a new password.')
+        wall_and_print('Step #4: Install required Python modules.')
         subprocess.run(['pip','install', 'xkcdpass'], check=True)
         go_again = True
         csm.increment_current_step()
     elif csm.get_current_step() == 5:
-        wall_and_print('Step #5: Set the password using the https://xkcd.com/936/ technique.')
+        wall_and_print('Step #5: Get the global configuration file.')
+        base_url = os.environ.get('KMS_BASE_URL', 'https://raw.githubusercontent.com/Coding-Badly/RFID-KeyMaster/006/develop/brian/pi')
+        get_this = base_url + '/' + 'kms.json'
+        try:
+            simple_get(get_this, path_kms_json)
+        except requests.exceptions.HTTPError:
+            pass
+        check_global_config()
+        go_again = True
+        csm.increment_current_step()
+    elif csm.get_current_step() == 6:
+        wall_and_print('Step #6: Set the password using the https://xkcd.com/936/ technique.')
         from xkcdpass import xkcd_password as xp
         wordfile = xp.locate_wordfile()
         mywords = xp.generate_wordlist(wordfile=wordfile, min_length=5, max_length=8)
@@ -113,15 +137,15 @@ while go_again:
         subprocess.run("chpasswd", input=pi_new_password, check=True)
         go_again = True
         csm.increment_current_step()
-    elif csm.get_current_step() == 6:
-        wall_and_print('Step #6: Change the hostname.')
+    elif csm.get_current_step() == 7:
+        wall_and_print('Step #7: Change the hostname.')
         path_hostname = pathlib.Path('/etc/hostname')
         path_hostname.write_text('RFID-KeyMaster-T01\n')
         subprocess.run(['sed','-i',"s/raspberrypi/RFID-KeyMaster-T01/",'/etc/hosts'], check=True)
         need_reboot = True
         csm.increment_current_step()
-    elif csm.get_current_step() == 7:
-        wall_and_print('Step #7: Change the timezone.')
+    elif csm.get_current_step() == 8:
+        wall_and_print('Step #8: Change the timezone.')
         # Why localtime has to be removed...
         # https://bugs.launchpad.net/ubuntu/+source/tzdata/+bug/1554806
         pathlib.Path('/etc/timezone').write_text('America/Chicago\n')
@@ -129,8 +153,8 @@ while go_again:
         subprocess.run(['dpkg-reconfigure','-f','noninteractive','tzdata'], check=True)
         go_again = True
         csm.increment_current_step()
-    elif csm.get_current_step() == 8:
-        wall_and_print('Step #8: Change the keyboard layout.')
+    elif csm.get_current_step() == 9:
+        wall_and_print('Step #9: Change the keyboard layout.')
         # debconf-get-selections | grep keyboard-configuration
         # The top entry is suspect.  "gb" was the value after changing 
         # keyboards using dpkg-reconfigure.
@@ -144,8 +168,8 @@ keyboard-configuration\tkeyboard-configuration/variant\tselect\tEnglish (US)
         subprocess.run(['dpkg-reconfigure','-f','noninteractive','keyboard-configuration'], check=True)
         go_again = True
         csm.increment_current_step()
-    elif csm.get_current_step() == 9:
-        wall_and_print('Step #9: Change the locale.')
+    elif csm.get_current_step() == 10:
+        wall_and_print('Step #10: Change the locale.')
         locale_conf = """
 locales\tlocales/locales_to_be_generated\tmultiselect\ten_US.UTF-8 UTF-8
 locales\tlocales/default_environment_locale\tselect\ten_US.UTF-8
@@ -156,17 +180,30 @@ locales\tlocales/default_environment_locale\tselect\ten_US.UTF-8
         subprocess.run(['update-locale','LANG=en_US.UTF-8'], check=True)
         go_again = True
         csm.increment_current_step()
-    elif csm.get_current_step() == 10:
-        wall_and_print('Step #10: Install Git.')
+    elif csm.get_current_step() == 11:
+        wall_and_print('Step #11: Install Git.')
         subprocess.run(['apt-get','-y','install','git'], check=True)
         go_again = True
         csm.increment_current_step()
-    # fix? Configure Git for Github?
-    # fix: Clone RFID-KeyMaster
-    elif csm.get_current_step() == 11:
-        wall_and_print('Step #11: One last reboot for good measure.')
-        need_reboot = True
+    elif csm.get_current_step() == 12:
+        wall_and_print('Step #12: Configure Git.')
+        this_mac = format(uuid.getnode(), 'X')
+        config_by_this_mac = global_config.get(this_mac, None)
+        config_github = config_by_this_mac.get('github', None) if config_by_this_mac else None
+        if config_github:
+            git_user_name = config_github.get('user.name', 'Git User Name Goes Here')
+            git_user_email = config_github.get('user.email', 'whomever@dallasmakerspace.org')
+            git_core_editor = config_github.get('core.editor', 'nano')
+            subprocess.run(['git','config','--global','user.name',git_user_name], check=True)
+            subprocess.run(['git','config','--global','user.email',git_user_email], check=True)
+            subprocess.run(['git','config','--global','core.editor',git_user_email], check=True)
+        go_again = True
         csm.increment_current_step()
+    # fix: Clone RFID-KeyMaster
+    #elif csm.get_current_step() == 12:
+    #    wall_and_print('Step #12: One last reboot for good measure.')
+    #    need_reboot = True
+    #    csm.increment_current_step()
     # fix: Configure RFID-KeyMaster to automatically run on boot.
     else:
         wall_and_print('RFID-KeyMaster installed.  Disabling the kms service.')

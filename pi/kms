@@ -12,8 +12,15 @@ set -u
 # Output each command before running.
 set -x
 
+# Where we get stuff.
+if [ -z ${KMS_BASE_URL+x} ]; then
+  KMS_BASE_URL=https://raw.githubusercontent.com/Coding-Badly/RFID-KeyMaster/006/develop/brian/pi
+fi
+
 # Where our work stuff goes.
-KMS_ROOT=/home/pi/dms
+if [ -z ${KMS_ROOT+x} ]; then
+  KMS_ROOT=/home/pi/dms
+fi
 
 # Don't fail if the directory already exists.
 mkdir $KMS_ROOT || true
@@ -37,7 +44,7 @@ WantedBy=multi-user.target
 EOL
 
 # Fetch the actual code.
-curl -s "https://raw.githubusercontent.com/Coding-Badly/RFID-KeyMaster/006/develop/brian/pi/kms.py" > $KMS_ROOT/kms.py
+curl -s "$KMS_BASE_URL/kms.py" > $KMS_ROOT/kms.py
 
 # Create and enable the kms.service.
 sudo cp $KMS_ROOT/kms.service /etc/systemd/system/kms.service
