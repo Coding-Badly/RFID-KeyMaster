@@ -26,7 +26,6 @@
 
 ============================================================================="""
 from drivers.DriverBase import DriverBase
-from drivers.Auth.MemberDataFreshener import MemberDataFreshener
 import json
 import logging
 import pathlib
@@ -40,7 +39,7 @@ class MemberDataCacher(DriverBase):
     MEMBER_DATA_FILENAME = 'MemberData.json'
     def setup(self):
         super().setup()
-        self.subscribe(None, MemberDataFreshener.FRESH_DATA, self.receive_fresh_data)
+        self.subscribe(None, 'fresh_member_data', self.receive_fresh_data)
     def startup(self):
         super().startup()
         self.open_for_business()

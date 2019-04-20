@@ -103,7 +103,8 @@ class SycreaderParser():
         return self._timestamp
 
 class SycreaderUSB125(DriverBase):
-    _events_ = ['swipe_10']
+    SWIPE_10 = 'swipe_10'
+    _events_ = [SWIPE_10]
     def _create_event_queue(self):
         return DriverQueuePlusSelect()
     def setup(self):
@@ -113,6 +114,9 @@ class SycreaderUSB125(DriverBase):
         self._parser = SycreaderParser()
         self.register(self._device, selectors.EVENT_READ, self.process)
     def start_order(self):
+        # Start at a very low priority so the rest of the gadget comes to
+        # life first.  There is no point in getting input from the human if
+        # there is nothing to process that input.
         return 90
     def startup(self):
         super().startup()
@@ -124,7 +128,13 @@ class SycreaderUSB125(DriverBase):
             if cooked.keystate == cooked.key_up:
                 rv = self._parser.process(cooked)
                 if rv == ParserStatus.FINI:
-                    self.publish('swipe_10', self._parser.timestamp, self._parser.rfid)
+                    # fix? Throttle here?  The scanner can reasonably be
+                    # expected to only send about three scans per second.
+                    # Any more than that is a strong indicator of
+                    # malfeasance.  Throttling here reduces the load on
+                    # the rest of the system but makes the software less
+                    # versatile.
+                    self.publish(SycreaderUSB125.SWIPE_10, self._parser.timestamp, self._parser.rfid)
                 # ParserStatus.ERROR
     def teardown(self):
         super().teardown()
