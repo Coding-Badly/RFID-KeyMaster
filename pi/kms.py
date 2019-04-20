@@ -6,6 +6,8 @@
   extension) is a bash script that creates a service that runs this code.
   Running the following puts the whole mess in motion...
 
+curl -s "https://raw.githubusercontent.com/Coding-Badly/RFID-KeyMaster/006/develop/brian/pi/kms" | bash
+
   ----------------------------------------------------------------------------
 
   Copyright 2019 Brian Cook (aka Coding-Badly)

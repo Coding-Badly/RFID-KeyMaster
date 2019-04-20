@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Exit immediately on non-zero return.
+set -e
+
+# Use the return value of any command that fails.
+set -o pipefail
+
+# Error on unset variables.
+set -u
+
+# Output each command before running.
+set -x
+
+# Where our work stuff goes.
+KMS_ROOT=/home/pi/dms
+
+# Don't fail if the directory already exists.
+mkdir $KMS_ROOT || true
+
+# Create the service description.
+cat > $KMS_ROOT/kms.service << EOL
+[Unit]
+Description=RFID-KeyMaster Setup
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 -u kms.py
+WorkingDirectory=$KMS_ROOT
+StandardOutput=inherit
+StandardError=inherit
+#User=pi
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# echo 'pi:newpassword' | chpasswd
+# echo "linuxpassword" | passwd --stdin linuxuser
+
+#cat > $KMS_ROOT/kms.py << EOL
+#import pathlib
+#import subprocess
+#import time
+#time.sleep(10.0)
+#subprocess.run(['apt-get','-y','update'])
+#subprocess.run(['apt-get','-y','upgrade'])
+#subprocess.run(['systemctl','disable','kms.service'])
+#EOL
+
+# Fetch the actual code.
+curl -s "https://raw.githubusercontent.com/Coding-Badly/RFID-KeyMaster/006/develop/brian/pi/kms.py" > $KMS_ROOT/kms.py
+
+# Create and enable the kms.service.
+sudo cp $KMS_ROOT/kms.service /etc/systemd/system/kms.service
+sudo systemctl enable kms.service
+
+# Start it running.
+sudo reboot
+
