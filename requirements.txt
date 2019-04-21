@@ -1,3 +1,5 @@
+evdev
 pytest
 python-dispatch
+PyYAML
 pyzipper

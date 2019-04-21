@@ -5,3 +5,4 @@ KeyMaster.log
 KeyMaster-watchdog
 rnd/
 *.~py
+MemberData.json
