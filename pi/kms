@@ -49,7 +49,8 @@ curl -s "$KMS_BASE_URL/kms.py" > $KMS_ROOT/kms.py
 # Create and enable the kms.service.
 sudo cp $KMS_ROOT/kms.service /etc/systemd/system/kms.service
 sudo systemctl enable kms.service
+sudo systemctl start kms.service  # rmv
 
 # Start it running.
-sudo reboot
+# fix sudo reboot
 
