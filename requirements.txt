@@ -3,3 +3,4 @@ pytest
 python-dispatch
 PyYAML
 pyzipper
+pywin32; platform_system == "Windows"
