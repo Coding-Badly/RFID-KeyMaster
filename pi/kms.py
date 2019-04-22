@@ -57,9 +57,9 @@ class DirectoryMaker():
         self._default_final_mode = default_final_mode
         self._uid = pwd.getpwnam("pi").pw_uid
         self._gid = grp.getgrnam("pi").gr_gid
-    def mkdir(self, path, final_mode=None):
+    def mkdir(self, path, parents=False, final_mode=None):
         final_mode = self._default_final_mode if final_mode is None else final_mode
-        path.mkdir(mode=0o777, parents=False, exist_ok=True)
+        path.mkdir(mode=0o777, parents=parents, exist_ok=True)
         os.chown(str(path), self._uid, self._gid)
         path.chmod(final_mode)
     def chown(self, path):
@@ -260,6 +260,10 @@ locales\tlocales/default_environment_locale\tselect\ten_US.UTF-8
             subprocess.run(['pip','install','-U','-r',str(path_requirements)], check=True)
         # Fix ownership of the RFID-KeyMaster repository.
         subprocess.run(['chown','-R','pi:pi','/home/pi/RFID-KeyMaster'], check=True)
+        # Prepare the cache directory.
+        dm = DirectoryMaker(default_final_mode=0o755)
+        path_cache = pathlib.Path('/var/cache/Dallas Makerspace/RFID-KeyMaster')
+        dm.mkdir(path_cache, parents=True)
         go_again = True
         csm.increment_current_step()
     #elif csm.get_current_step() == 15:
