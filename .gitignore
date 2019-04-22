@@ -1,8 +1,9 @@
 KeyMaster.ini
 ADCache.json
 KeyMaster.log
+MemberData.json
+MemberData.json.bak
 *.pyc
+*.~py
 KeyMaster-watchdog
 rnd/
-*.~py
-MemberData.json
