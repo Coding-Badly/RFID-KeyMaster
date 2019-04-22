@@ -1,6 +1,6 @@
-evdev
+evdev; platform_system == "Linux"
 pytest
 python-dispatch
+pywin32; platform_system == "Windows"
 PyYAML
 pyzipper
-pywin32; platform_system == "Windows"
