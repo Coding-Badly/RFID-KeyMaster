@@ -29,6 +29,7 @@ from drivers.DriverBase import DriverBase
 import json
 import logging
 import pathlib
+from utils import get_cache_path
 from utils.twophaser import two_phase_open
 
 logger = logging.getLogger(__name__)
@@ -36,9 +37,9 @@ logger = logging.getLogger(__name__)
 class MemberDataCacher(DriverBase):
     CACHED_DATA = 'cached_member_data'
     _events_ = [CACHED_DATA]
-    MEMBER_DATA_FILENAME = 'MemberData.json'
     def setup(self):
         super().setup()
+        self._path = get_cache_path() / 'MemberData.json'
         self.subscribe(None, 'fresh_member_data', self.receive_fresh_data)
     def startup(self):
         super().startup()
@@ -47,7 +48,7 @@ class MemberDataCacher(DriverBase):
         while keep_trying:
             keep_trying = False
             try:
-                with two_phase_open(MemberDataCacher.MEMBER_DATA_FILENAME, 'rt') as f:
+                with two_phase_open(self._path, 'rt') as f:
                     data = json.load(f)
                 self.publish(MemberDataCacher.CACHED_DATA, data)
                 logger.info('Cached member data published.')
@@ -55,10 +56,9 @@ class MemberDataCacher(DriverBase):
                 logger.warning('Cached member data not available.')
             except json.decoder.JSONDecodeError:
                 logger.error('Cached member data is corrupt.')
-                primary_path = pathlib.Path(MemberDataCacher.MEMBER_DATA_FILENAME)
-                primary_path.unlink()
+                self._path.unlink()
                 keep_trying = True
     def receive_fresh_data(self, data):
-        with two_phase_open(MemberDataCacher.MEMBER_DATA_FILENAME, 'wt') as f:
+        with two_phase_open(self._path, 'wt') as f:
             json.dump(data, f)
 
