@@ -1,5 +1,16 @@
+import logging
+import pathlib
+import pytest
 from utils.file_preserver import FilePreserver, PreservedFile
 import uuid
+
+logger = logging.getLogger(__name__)
+
+# https://docs.pytest.org/en/latest/_modules/_pytest/tmpdir.html#TempPathFactory.mktemp
+# ...search for "def tmp_path("
+@pytest.fixture
+def tmpdirn2(tmp_path):
+    return pathlib.Path(str(tmp_path))
 
 def test_PreservedFile_rich_comparisons():
     pf1 = PreservedFile('MemberData.json')
@@ -12,14 +23,22 @@ def test_PreservedFile_rich_comparisons():
     assert not pf1 != pf2
     assert hash(pf1) == hash(pf2)
 
-def test_PreservedFile_preserve_then_restore(tmp_path):
+def test_PreservedFile_preserve_then_restore(caplog, tmpdirn2):
+    caplog.set_level(logging.INFO)
     # Prepare a test file.
-    pf1 = tmp_path / 'MemberData.json'
+    pf1 = tmpdirn2 / 'MemberData.json'
     pf1.write_text('Whatever, dude!')
     # Determine what the file's name will be while preserved.
     prefix = uuid.uuid4().hex + '-'
-    pf2 = tmp_path / (prefix + 'MemberData.json')
+    pf2 = tmpdirn2 / (prefix + 'MemberData.json')
     # Time to test.
+    # rmv logger.info(tmpdirn2)
+    # rmv logger.info(type(tmpdirn2))
+    # rmv logger.info(pf1)
+    # rmv logger.info(type(pf1))
+    # rmv logger.info(isinstance(pf1, pathlib.Path))  # False!
+    # rmv logger.info(type(tmpdirn2) == type(pf1))
+    # rmv logger.info(type(pf1) == pathlib.PosixPath)
     pf3 = PreservedFile(pf1)
     # Restore before preserve is ignored.
     pf3.restore_it()
@@ -34,8 +53,8 @@ def test_PreservedFile_preserve_then_restore(tmp_path):
     assert not pf2.exists()
     assert pf1.exists()
 
-def test_FilePreserver(tmp_path):
-    pf1 = tmp_path / 'MemberData.json'
+def test_FilePreserver(tmpdirn2):
+    pf1 = tmpdirn2 / 'MemberData.json'
     pf1.write_text('Whatever, dude!')
     with FilePreserver(pf1):
         assert not pf1.exists()
@@ -61,15 +80,15 @@ def test_FilePreserver(tmp_path):
         assert not pf1.exists()
     assert pf1.exists()
     assert pf1.read_text() == 'Whatever, dude!'
-    fp1 = FilePreserver(tmp_path/'MemberData.json', tmp_path/'MemberData.json')
+    fp1 = FilePreserver(tmpdirn2/'MemberData.json', tmpdirn2/'MemberData.json')
     assert len(fp1._preserve_these) == 1
     with fp1:
         assert not pf1.exists()
     assert pf1.exists()
     assert pf1.read_text() == 'Whatever, dude!'
-    pf2 = tmp_path / 'MemberData.json.bak'
+    pf2 = tmpdirn2 / 'MemberData.json.bak'
     assert not pf2.exists()
-    fp1 = FilePreserver(tmp_path/'MemberData.json', tmp_path/'MemberData.json.bak')
+    fp1 = FilePreserver(tmpdirn2/'MemberData.json', tmpdirn2/'MemberData.json.bak')
     with fp1:
         assert not pf1.exists()
         assert not pf2.exists()

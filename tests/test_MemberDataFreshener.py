@@ -25,6 +25,6 @@ def test_interval(caplog):
         root.join()
         root.teardown()
         assert mdp1.exists()
-        with mdp1.open('rb') as f:
+        with mdp1.open('rt') as f:
             json.load(f)
 
