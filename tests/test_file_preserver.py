@@ -6,12 +6,6 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
-# https://docs.pytest.org/en/latest/_modules/_pytest/tmpdir.html#TempPathFactory.mktemp
-# ...search for "def tmp_path("
-@pytest.fixture
-def tmpdirn2(tmp_path):
-    return pathlib.Path(str(tmp_path))
-
 def test_PreservedFile_rich_comparisons():
     pf1 = PreservedFile('MemberData.json')
     pf2 = PreservedFile('MemberData.json')

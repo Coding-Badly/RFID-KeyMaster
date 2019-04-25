@@ -1,12 +1,11 @@
 from drivers.Auth.MemberDataCacher import MemberDataCacher
 from drivers.Auth.MemberDataFreshener import MemberDataFreshener
-from drivers.DriverBase import DriverGroup, DeathOfRats
+from drivers.DriverBase import DriverGroup
 from drivers.Test.RunForSeconds import RunForSeconds
 import json
 from utils import get_cache_path
 from utils.file_preserver import FilePreserver
 import logging
-import time
 
 def test_interval(caplog):
     caplog.set_level(logging.INFO)

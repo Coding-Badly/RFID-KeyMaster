@@ -28,3 +28,9 @@ def shared_data_path(request):
     shared_data_path = base / 'data'
     return shared_data_path
 
+# https://docs.pytest.org/en/latest/_modules/_pytest/tmpdir.html#TempPathFactory.mktemp
+# ...search for "def tmp_path("
+@pytest.fixture
+def tmpdirn2(tmp_path):
+    return Path(str(tmp_path))
+
