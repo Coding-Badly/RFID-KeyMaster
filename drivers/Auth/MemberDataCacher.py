@@ -26,20 +26,67 @@
 
 ============================================================================="""
 from drivers.DriverBase import DriverBase
+import gzip
 import json
 import logging
 import pathlib
+import pickle
 from utils import get_cache_path
 from utils.twophaser import two_phase_open
 
 logger = logging.getLogger(__name__)
+
+class RetryLoad(Exception):
+    pass
+
+class MemberDataCacheFile():
+    def dump(self, data):
+        pass
+    def load(self):
+        return None
+
+class MemberDataCacheFileAsJson(MemberDataCacheFile):
+    def __init__(self):
+        super().__init__()
+        self._path = get_cache_path() / 'MemberData.json'
+    def dump(self, data):
+        with two_phase_open(self._path, 'wt') as ous:
+            json.dump(data, ous)
+    def load(self):
+        try:
+            with two_phase_open(self._path, 'rt') as f:
+                data = json.load(f)
+        except json.decoder.JSONDecodeError:
+            self._path.unlink()
+            raise RetryLoad()
+        return data
+
+class MemberDataCacheFileAsPickleGzip(MemberDataCacheFile):
+    def __init__(self):
+        super().__init__()
+        self._path = get_cache_path() / 'MemberData.pickle.gz'
+    def dump(self, data):
+        with two_phase_open(self._path, 'wb') as ous:
+            with gzip.open(ous, 'wb') as ous:
+                pickle.dump(data, ous, protocol=pickle.HIGHEST_PROTOCOL)
+    def load(self):
+        try:
+            with two_phase_open(self._path, 'rb') as ins:
+                with gzip.open(ins, 'rb') as ins:
+                    data = pickle.load(ins)
+        except pickle.PickleError:
+            self._path.unlink()
+            raise RetryLoad()
+        return data
 
 class MemberDataCacher(DriverBase):
     CACHED_DATA = 'cached_member_data'
     _events_ = [CACHED_DATA]
     def setup(self):
         super().setup()
-        self._path = get_cache_path() / 'MemberData.json'
+        # rmv? self._file_manager = MemberDataCacheFileAsJson()
+        self._file_manager = MemberDataCacheFileAsPickleGzip()
+        # rmv self._path = get_cache_path() / 'MemberData.json'
         self.subscribe(None, 'fresh_member_data', self.receive_fresh_data)
     def startup(self):
         super().startup()
@@ -48,17 +95,31 @@ class MemberDataCacher(DriverBase):
         while keep_trying:
             keep_trying = False
             try:
-                with two_phase_open(self._path, 'rt') as f:
-                    data = json.load(f)
+                data = self._file_manager.load()
                 self.publish(MemberDataCacher.CACHED_DATA, data)
                 logger.info('Cached member data published.')
             except FileNotFoundError:
                 logger.warning('Cached member data not available.')
-            except json.decoder.JSONDecodeError:
+            except RetryLoad:
                 logger.error('Cached member data is corrupt.')
-                self._path.unlink()
                 keep_trying = True
+            # rmv try:
+            # rmv     with two_phase_open(self._path, 'rt') as f:
+            # rmv         data = json.load(f)
+            # rmv     self.publish(MemberDataCacher.CACHED_DATA, data)
+            # rmv     logger.info('Cached member data published.')
+            # rmv except FileNotFoundError:
+            # rmv     logger.warning('Cached member data not available.')
+            # rmv # fix: https://docs.python.org/3/library/pickle.html#pickle.UnpicklingError
+            # rmv # fix: pickle.PickleError
+            # rmv # fix: AttributeError, EOFError, ImportError, IndexError
+            # rmv # fix: Exception
+            # rmv except json.decoder.JSONDecodeError:
+            # rmv     logger.error('Cached member data is corrupt.')
+            # rmv     self._path.unlink()
+            # rmv     keep_trying = True
     def receive_fresh_data(self, data):
-        with two_phase_open(self._path, 'wt') as f:
-            json.dump(data, f)
+        self._file_manager.dump(data)
+        # rmv with two_phase_open(self._path, 'wt') as f:
+        # rmv     json.dump(data, f)
 

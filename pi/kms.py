@@ -175,6 +175,7 @@ while go_again:
         wall_and_print('Change the timezone.', csm.get_current_step())
         # Why localtime has to be removed...
         # https://bugs.launchpad.net/ubuntu/+source/tzdata/+bug/1554806
+        # date "+%Z %z"
         pathlib.Path('/etc/timezone').write_text('America/Chicago\n')
         pathlib.Path('/etc/localtime').unlink()
         subprocess.run(['dpkg-reconfigure','-f','noninteractive','tzdata'], check=True)
@@ -197,6 +198,7 @@ keyboard-configuration\tkeyboard-configuration/variant\tselect\tEnglish (US)
         csm.increment_current_step()
     elif csm.get_current_step() == 12:
         wall_and_print('Change the locale.', csm.get_current_step())
+        # locale
         locale_conf = """
 locales\tlocales/locales_to_be_generated\tmultiselect\ten_US.UTF-8 UTF-8
 locales\tlocales/default_environment_locale\tselect\ten_US.UTF-8
