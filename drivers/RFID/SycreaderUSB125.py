@@ -48,9 +48,12 @@ class SycreaderParser():
         if len(kc) == 5:
             digit = kc[-1]
             if (digit >= '0') and (digit <= '9'):
-                self._pending += digit
-                return True
-            return False
+                if len(self._pending) < 10:
+                    self._pending += digit
+                    return True
+                else:
+                    return False
+        return False
     def _reset(self):
         self._state = self.wait_for_first_event
         self._start = None
@@ -63,7 +66,7 @@ class SycreaderParser():
             self._stop = self._start
             return ParserStatus.PENDING
         else:
-            # Unexpected keycode
+            # Unexpected keycode or too many digits
             self._reset()
             return ParserStatus.ERROR
     def collecting(self, wrapped):
@@ -81,7 +84,7 @@ class SycreaderParser():
             self._reset()
             return ParserStatus.FINI
         else:
-            # Unexpected keycode
+            # Unexpected keycode or too many digits
             self._reset()
             # fix? Report the error?
             return ParserStatus.ERROR

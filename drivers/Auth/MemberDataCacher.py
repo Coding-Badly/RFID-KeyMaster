@@ -40,15 +40,19 @@ class RetryLoad(Exception):
     pass
 
 class MemberDataCacheFile():
+    def __init__(self, suffix):
+        super().__init__()
+        self._path = get_cache_path() / ('MemberData' + suffix)
     def dump(self, data):
         pass
     def load(self):
         return None
+    def get_path(self):
+        return self._path
 
 class MemberDataCacheFileAsJson(MemberDataCacheFile):
     def __init__(self):
-        super().__init__()
-        self._path = get_cache_path() / 'MemberData.json'
+        super().__init__('.json')
     def dump(self, data):
         with two_phase_open(self._path, 'wt') as ous:
             json.dump(data, ous)
@@ -63,8 +67,7 @@ class MemberDataCacheFileAsJson(MemberDataCacheFile):
 
 class MemberDataCacheFileAsPickleGzip(MemberDataCacheFile):
     def __init__(self):
-        super().__init__()
-        self._path = get_cache_path() / 'MemberData.pickle.gz'
+        super().__init__('.pickle.gz')
     def dump(self, data):
         with two_phase_open(self._path, 'wb') as ous:
             with gzip.open(ous, 'wb') as ous:
@@ -82,11 +85,13 @@ class MemberDataCacheFileAsPickleGzip(MemberDataCacheFile):
 class MemberDataCacher(DriverBase):
     CACHED_DATA = 'cached_member_data'
     _events_ = [CACHED_DATA]
-    def setup(self):
-        super().setup()
+    def _after_init(self):
+        super()._after_init()
         # rmv? self._file_manager = MemberDataCacheFileAsJson()
         self._file_manager = MemberDataCacheFileAsPickleGzip()
         # rmv self._path = get_cache_path() / 'MemberData.json'
+    def setup(self):
+        super().setup()
         self.subscribe(None, 'fresh_member_data', self.receive_fresh_data)
     def startup(self):
         super().startup()
@@ -122,4 +127,6 @@ class MemberDataCacher(DriverBase):
         self._file_manager.dump(data)
         # rmv with two_phase_open(self._path, 'wt') as f:
         # rmv     json.dump(data, f)
+    def get_path(self):
+        return self._file_manager.get_path()
 

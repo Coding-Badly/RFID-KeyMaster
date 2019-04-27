@@ -340,6 +340,10 @@ class DriverBase(Thread, Dispatcher):
         # fix: Use the following instead of returning a Boolean from setup.
         self._ok_to_start = True
         super().__init__(name=name)
+        self._after_init()
+
+    def _after_init(self):
+        pass
 
     @property
     def name(self):
