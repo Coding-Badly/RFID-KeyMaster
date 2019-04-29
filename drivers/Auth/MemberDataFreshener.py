@@ -63,12 +63,18 @@ def fix_etag(headers):
 class MemberDataFreshener(DriverBase):
     FRESH_DATA = 'fresh_member_data'
     _events_ = [FRESH_DATA]
+    def convert_json_to_internal(self, data):
+        for value in data.values():
+            user = value['user']
+            user['groups'] = frozenset(user['groups'])
+        return data
     def poll_for_fresh_data(self):
         with self._session as s:
           response = s.get(self._remote_cache_url, headers=self._request_headers)  # fix: verify=False
         if response.status_code == requests.codes.ok:
             try:
                 data = response.json()
+                self.convert_json_to_internal(data)
                 self.publish(MemberDataFreshener.FRESH_DATA, data)
                 logger.info('Fresh member data published.')
                 etag = fix_etag(response.headers)
