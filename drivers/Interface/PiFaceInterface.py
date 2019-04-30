@@ -22,10 +22,13 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers.Interface.Interface import Interface
+from drivers import Signals
 import pifacedigitalio
 from exceptions.InvalidPositionException import InvalidPositionException
 # rmv import atexit
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PiFaceInterface(Interface):
     def setup(self):
@@ -35,7 +38,7 @@ class PiFaceInterface(Interface):
         # Turn off Interrupts
         pifacedigitalio.core.deinit()
         self._pifacedigital = pifacedigitalio.PiFaceDigital(init_board=init_board)
-        self.subscribe(None, Interface.CONTROL_TARGET, self.receive_control_target)
+        self.subscribe(None, Signals.CONTROL_TARGET, self.receive_control_target)
         # rmv atexit.register(self.reset_piface)
         #return False
     def startup(self):
@@ -43,7 +46,9 @@ class PiFaceInterface(Interface):
         # fix? Publish the initial state of the target?
         self.open_for_business()
     def receive_control_target(self, data):
-        self._pifacedigital.relays[self._target].value = int(data)
+        new_value = int(data)
+        logger.info('tock {}'.format(new_value))
+        self._pifacedigital.relays[self._target].value = new_value
         # fix? Publish that the target state has changed?
 
     # rmv def reset_piface(self):

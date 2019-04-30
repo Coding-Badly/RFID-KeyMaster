@@ -25,4 +25,5 @@
 from drivers.DriverBase import DriverBase
 
 class Interface(DriverBase):
-    CONTROL_TARGET = 'control_target'
+    # rmv CONTROL_TARGET = 'control_target'
+    pass
