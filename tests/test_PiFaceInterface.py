@@ -33,7 +33,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class TestController(DriverBase):
+class SimpleToggleController(DriverBase):
     _events_ = [Signals.CONTROL_TARGET]
     def startup(self):
         super().startup()
@@ -50,7 +50,7 @@ def run_toggle_relay_N(config):
     #dor = root.add(DeathOfRats(name='DeathOfRats', config=None, loader=None, id=None))
     dor = root.add(RunForSeconds(10.0))
     pf1 = root.add(PiFaceInterface(name='Test Me', config=config, loader=None, id=None))
-    tm1 = root.add(TestController(name='Test Controller', config=None, loader=None, id=None))
+    tm1 = root.add(SimpleToggleController(name='Simple Toggle Controller', config=None, loader=None, id=None))
     root.setup()
     root.start()
     root.join()
