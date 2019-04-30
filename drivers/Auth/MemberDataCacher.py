@@ -4,8 +4,8 @@
   maintaining a cache of the most recent member data.  If cached data is
   available on startup MemberDataCacher loads it and publishes it.  When fresh
   member data is available it is saved to disk.  Anything interested in member
-  data should subscribe to both MemberDataCacher.CACHED_DATA and
-  MemberDataFreshener.FRESH_DATA.  Obviously FRESH_DATA should be favoured.
+  data should subscribe to both Signals.CACHED_DATA and Signals.FRESH_DATA.
+  Obviously FRESH_DATA should be favoured.
 
   ----------------------------------------------------------------------------
 
@@ -25,6 +25,7 @@
   limitations under the License.
 
 ============================================================================="""
+from drivers import Signals
 from drivers.DriverBase import DriverBase
 import gzip
 import json
@@ -83,8 +84,7 @@ class MemberDataCacheFileAsPickleGzip(MemberDataCacheFile):
         return data
 
 class MemberDataCacher(DriverBase):
-    CACHED_DATA = 'cached_member_data'
-    _events_ = [CACHED_DATA]
+    _events_ = [Signals.CACHED_DATA]
     def _after_init(self):
         super()._after_init()
         # rmv? self._file_manager = MemberDataCacheFileAsJson()
@@ -92,7 +92,7 @@ class MemberDataCacher(DriverBase):
         # rmv self._path = get_cache_path() / 'MemberData.json'
     def setup(self):
         super().setup()
-        self.subscribe(None, 'fresh_member_data', self.receive_fresh_data)
+        self.subscribe(None, Signals.FRESH_DATA, self.receive_fresh_data)
     def startup(self):
         super().startup()
         self.open_for_business()
@@ -101,7 +101,7 @@ class MemberDataCacher(DriverBase):
             keep_trying = False
             try:
                 data = self._file_manager.load()
-                self.publish(MemberDataCacher.CACHED_DATA, data)
+                self.publish(Signals.CACHED_DATA, data)
                 logger.info('Cached member data published.')
             except FileNotFoundError:
                 logger.warning('Cached member data not available.')
@@ -111,7 +111,7 @@ class MemberDataCacher(DriverBase):
             # rmv try:
             # rmv     with two_phase_open(self._path, 'rt') as f:
             # rmv         data = json.load(f)
-            # rmv     self.publish(MemberDataCacher.CACHED_DATA, data)
+            # rmv     self.publish(Signals.CACHED_DATA, data)
             # rmv     logger.info('Cached member data published.')
             # rmv except FileNotFoundError:
             # rmv     logger.warning('Cached member data not available.')
