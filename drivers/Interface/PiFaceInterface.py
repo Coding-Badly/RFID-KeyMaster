@@ -23,14 +23,15 @@
 
 ============================================================================="""
 from drivers import Signals
-import pifacedigitalio
+from drivers.DriverBase import DriverBase
 from exceptions.InvalidPositionException import InvalidPositionException
+import pifacedigitalio
 # rmv import atexit
 import logging
 
 logger = logging.getLogger(__name__)
 
-class PiFaceInterface(Interface):
+class PiFaceInterface(DriverBase):
     def setup(self):
         super().setup()
         init_board = self.config.get('init_board', False)
