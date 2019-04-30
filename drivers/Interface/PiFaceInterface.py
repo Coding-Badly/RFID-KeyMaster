@@ -22,7 +22,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers.Interface import Interface
+from drivers.Interface.Interface import Interface
 import pifacedigitalio
 from exceptions.InvalidPositionException import InvalidPositionException
 # rmv import atexit
