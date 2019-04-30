@@ -23,5 +23,11 @@
 
 ============================================================================="""
 
-CONTROL_TARGET = 'control_target'
-
+STOP_NOW                    = 'stop_now'
+CONTROL_TARGET              = 'control_target'
+SWIPE_10                    = 'swipe_10'
+FRESH_DATA                  = 'fresh_member_data'
+CACHED_DATA                 = 'cached_member_data'
+LOGIN_RFID_NOT_FOUND        = 'login_rfid_not_found'
+LOGIN_PERMISSION_DENIED     = 'login_permission_denied'
+LOGIN_SUCCESS               = 'login_success'

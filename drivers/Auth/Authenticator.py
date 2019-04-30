@@ -21,23 +21,21 @@
   limitations under the License.
 
 ============================================================================="""
+from drivers import Signals
 from drivers.DriverBase import DriverBase
 import logging
 
 logger = logging.getLogger(__name__)
 
 class Authenticator(DriverBase):
-    LOGIN_RFID_NOT_FOUND = 'login_rfid_not_found'
-    LOGIN_PERMISSION_DENIED = 'login_permission_denied'
-    LOGIN_SUCCESS = 'login_success'
-    _events_ = [LOGIN_RFID_NOT_FOUND, LOGIN_PERMISSION_DENIED, LOGIN_SUCCESS]
+    _events_ = [Signals.LOGIN_RFID_NOT_FOUND, Signals.LOGIN_PERMISSION_DENIED, Signals.LOGIN_SUCCESS]
     def setup(self):
         super().setup()
         self._have_fresh_data = False
         self._member_data = dict()
-        self.subscribe(None, 'cached_member_data', self.receive_cached_data)
-        self.subscribe(None, 'fresh_member_data', self.receive_fresh_data)
-        self.subscribe(None, 'swipe_10', self.receive_swipe_10)
+        self.subscribe(None, Signals.CACHED_DATA, self.receive_cached_data)
+        self.subscribe(None, Signals.FRESH_DATA, self.receive_fresh_data)
+        self.subscribe(None, Signals.SWIPE_10, self.receive_swipe_10)
     def startup(self):
         super().startup()
         self.open_for_business()
@@ -52,4 +50,4 @@ class Authenticator(DriverBase):
         if member_data:
             pass
         else:
-            self.publish(Authenticator.LOGIN_RFID_NOT_FOUND, rfid)
+            self.publish(Signals.LOGIN_RFID_NOT_FOUND, rfid)

@@ -41,6 +41,7 @@
   limitations under the License.
 
 ============================================================================="""
+from drivers import Signals
 from drivers.DriverBase import DriverBase
 import json
 import logging
@@ -61,8 +62,7 @@ def fix_etag(headers):
     return '"' + no_quotes + '"'
 
 class MemberDataFreshener(DriverBase):
-    FRESH_DATA = 'fresh_member_data'
-    _events_ = [FRESH_DATA]
+    _events_ = [Signals.FRESH_DATA]
     def convert_json_to_internal(self, data):
         for value in data.values():
             user = value['user']
@@ -75,7 +75,7 @@ class MemberDataFreshener(DriverBase):
             try:
                 data = response.json()
                 self.convert_json_to_internal(data)
-                self.publish(MemberDataFreshener.FRESH_DATA, data)
+                self.publish(Signals.FRESH_DATA, data)
                 logger.info('Fresh member data published.')
                 etag = fix_etag(response.headers)
                 logger.info('etag = %s.', etag)

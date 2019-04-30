@@ -26,6 +26,7 @@
 
 ============================================================================="""
 from collections import OrderedDict
+from drivers import Signals
 from threading import Thread, Event
 from exceptions.DriverWontStartError import DriverWontStartError
 from exceptions.RequiredDriverException import RequiredDriverException
@@ -328,7 +329,6 @@ class DriverQueuePlusSelect():
         self._wake_pipe_read = None
 
 class DriverBase(Thread, Dispatcher):
-    EVENT_STOP_NOW = 'stop_now'
 
     def __init__(self, name, config, loader, id):
         self._parent = default_driver_parent
@@ -463,7 +463,7 @@ class DriverBase(Thread, Dispatcher):
         self._event_queue.setup()
         self._timelets = list()
         self._open_for_business = Event()
-        self.subscribe(None, DriverBase.EVENT_STOP_NOW, self._stop_now, False, False)
+        self.subscribe(None, Signals.STOP_NOW, self._stop_now, False, False)
 
     def start_order(self):
         return 50
@@ -491,7 +491,7 @@ class DriverBase(Thread, Dispatcher):
         self._event_queue = None
         self._timelets = None
         # fix: What can be done with _open_for_business?
-        # fix: If revoke is added then reverse the subscribe to EVENT_STOP_NOW
+        # fix: If revoke is added then reverse the subscribe to STOP_NOW
 
     def run(self):
         try:
@@ -508,17 +508,17 @@ class DriverBase(Thread, Dispatcher):
             os._exit(42) # Make sure entire application exits
 
 class DeathOfRats(DriverBase):
-    _events_ = [DriverBase.EVENT_STOP_NOW]
+    _events_ = [Signals.STOP_NOW]
     def start_order(self):
         return 99
     def startup(self):
         super().startup()
         self.open_for_business()
     def stop_all(self):
-        self.publish(DriverBase.EVENT_STOP_NOW)
+        self.publish(Signals.STOP_NOW)
     def shutdown(self):
         super().shutdown()
-        self.publish(DriverBase.EVENT_STOP_NOW)
+        self.publish(Signals.STOP_NOW)
 
 class DriverBaseOld(DriverBase):
     def __init__(self, config, loader, id):
