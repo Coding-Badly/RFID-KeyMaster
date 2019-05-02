@@ -28,8 +28,13 @@ from enum import Enum
 import evdev
 import selectors
 
-def find_el_cheapo_rfid_reader():
-    return [device for device in [evdev.InputDevice(path) for path in evdev.list_devices()] if 'SYCREADER' in device.name.upper()]
+_an_saor_rfid_readers = None
+
+def find_an_saor_rfid_readers():
+    if _an_saor_rfid_readers is None:
+        _an_saor_rfid_readers = [device for device in [evdev.InputDevice(path) for path in evdev.list_devices()] if 'SYCREADER' in device.name.upper()]
+        _an_saor_rfid_readers.sort(key=lambda device: device.phys)
+    return _an_saor_rfid_readers
 
 class ParserStatus(Enum):
     UNKNOWN = 0
@@ -112,8 +117,8 @@ class SycreaderUSB125(DriverBase):
         return DriverQueuePlusSelect()
     def setup(self):
         super().setup()
-        # fix: Fail if the number of readers found is not one?
-        self._device = find_el_cheapo_rfid_reader()[0]
+        self._reader = int(self.config.get('reader', 0))
+        self._device = find_an_saor_rfid_readers()[self._reader]
         self._parser = SycreaderParser()
         self.register(self._device, selectors.EVENT_READ, self.process)
     def start_order(self):

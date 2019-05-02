@@ -58,11 +58,11 @@ def run_toggle_relay_N(config):
 
 def test_toggle_relay_0(caplog):
     caplog.set_level(logging.INFO)
-    config = {"driver": "PiFaceInterface", "init_board": False, "target": 0}
+    config = {"driver": "PiFaceInterface", "init_board": False, "relay": 0}
     run_toggle_relay_N(config)
 
 def test_toggle_relay_1(caplog):
     caplog.set_level(logging.INFO)
-    config = {"driver": "PiFaceInterface", "init_board": False, "target": 1}
+    config = {"driver": "PiFaceInterface", "init_board": False, "relay": 1}
     run_toggle_relay_N(config)
 
