@@ -34,8 +34,9 @@ logger = logging.getLogger(__name__)
 class PiFaceInterface(DriverBase):
     def setup(self):
         super().setup()
-        init_board = self.config.get('init_board', False)
-        self._relay = int(self.config.get('relay', 0))
+        group_number = int(self.config.get('group_number', 0))
+        init_board = self.config.get('init_board', True)
+        self._relay = int(self.config.get('relay', group_number))
         # Turn off Interrupts
         pifacedigitalio.core.deinit()
         self._pifacedigital = pifacedigitalio.PiFaceDigital(init_board=init_board)

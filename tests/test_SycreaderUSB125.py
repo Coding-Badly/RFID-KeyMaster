@@ -26,31 +26,96 @@ if platform.system() == 'Windows':
     pytest.skip("skipping tests that will not run on Windows", allow_module_level=True)
 
 from drivers import Signals
-from drivers.DriverBase import DriverBase
+from drivers.DriverBase import DriverBase, DriverGroup
+from drivers.RFID.SycreaderUSB125 import SycreaderUSB125
+from drivers.RFID.SycreaderUSB125 import find_an_saor_rfid_readers
+from drivers.Test.RunForSeconds import RunForSeconds
 import logging
 
 logger = logging.getLogger(__name__)
 
+class TagBase():
+    def __init__(self, color):
+        self._color = color
+    def action(self, target):
+        return ''
+
+class NormalTag(TagBase):
+    pass
+
+class StopTag(TagBase):
+    def action(self, target):
+        super().action(target)
+        # rmv target._stop_now()
+        target.publish(Signals.STOP_NOW)
+        return 'stop'
+
 class SimplePrintTagController(DriverBase):
+    _events_ = [Signals.STOP_NOW]
     def setup(self):
         super().setup()
+        self._no_tag = NormalTag('Unknown')
+        self._tags = dict()
+        self._tags['0004134263'] = NormalTag('Black')
+        self._tags['0002864796'] = NormalTag('Blue')
+        self._tags['0005675589'] = NormalTag('Green')
+        self._tags['0008683072'] = NormalTag('Purple')
+        self._tags['0006276739'] = NormalTag('Red')
+        self._tags['0016182332'] = StopTag('Yellow')
+        self._reader = int(self.config.get('reader', 0))
         self.subscribe(None, Signals.SWIPE_10, self.receive_swipe_10)
+    def startup(self):
+        super().startup()
+        self.open_for_business()
     # self.publish(Signals.SWIPE_10, self._parser.timestamp, self._parser.rfid)
     def receive_swipe_10(self, timestamp, rfid):
-        logger.info('rfid {} {}'.format(timestamp, rfid))
+        tag = self._tags.get(rfid, self._no_tag)
+        logger.info('#{}: {} {} {} - {}'.format(self._reader, timestamp, rfid, tag._color, tag.action(self)))
 
-def run_rfid_reader(config):
+def create_rfid_reader(config):
     root = DriverGroup()
-    dor = root.add(RunForSeconds(10.0))
     jk1 = root.add(SycreaderUSB125(name='Test Me', config=config, loader=None, id=None))
-    tm1 = root.add(SimplePrintTagController(name='Simple Print Tag Controller', config=None, loader=None, id=None))
+    tm1 = root.add(SimplePrintTagController(name='Simple Print Tag Controller', config=config, loader=None, id=None))
+    return root
+
+def run_root(root):
     root.setup()
     root.start()
     root.join()
     root.teardown()
 
-def test_reader_0(caplog):
+def run_rfid_reader(config):
+    root = create_rfid_reader(config)
+    # rmv dor = root.add(RunForSeconds(10.0))
+    run_root(root)
+
+# rmv def test_all_readers_individually(caplog):
+# rmv     caplog.set_level(logging.INFO)
+# rmv     for i1 in range(len(find_an_saor_rfid_readers())):
+# rmv         logger.info('#{}...'.format(i1))
+# rmv         config = {"driver": "SycreaderUSB125", "reader": i1, "group_number": i1}
+# rmv         run_rfid_reader(config)
+
+def run_all_readers_at_once(which):
+    root = DriverGroup()
+    for i1 in range(len(find_an_saor_rfid_readers())):
+        config = {"driver": "SycreaderUSB125"}
+        if "reader" in which:
+            config["reader"] = i1
+        if "group_number" in which:
+            config["group_number"] = i1
+        root.add(create_rfid_reader(config))
+    logger.info('Scan away...')
+    run_root(root)
+
+def test_all_readers_at_once(caplog):
     caplog.set_level(logging.INFO)
-    config = {"driver": "SycreaderUSB125", "reader": 0}
-    run_rfid_reader(config)
+    run_all_readers_at_once(frozenset({"reader", "group_number"}))
+    run_all_readers_at_once(frozenset({"reader"}))
+    run_all_readers_at_once(frozenset({"group_number"}))
+
+# rmv def test_reader_1(caplog):
+# rmv     caplog.set_level(logging.INFO)
+# rmv     config = {"driver": "SycreaderUSB125", "reader": 1}
+# rmv     run_rfid_reader(config)
 

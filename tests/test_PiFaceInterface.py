@@ -45,7 +45,12 @@ class SimpleToggleController(DriverBase):
         logger.info('tick {}'.format(self._state))
         self.publish(Signals.CONTROL_TARGET, self._state)
 
-def run_toggle_relay_N(config):
+def run_toggle_relay(which, number):
+    config = {"driver": "PiFaceInterface", "init_board": True}
+    if "relay" in which:
+        config["relay"] = number
+    if "group_number" in which:
+        config["group_number"] = number
     root = DriverGroup()
     #dor = root.add(DeathOfRats(name='DeathOfRats', config=None, loader=None, id=None))
     dor = root.add(RunForSeconds(10.0))
@@ -56,13 +61,21 @@ def run_toggle_relay_N(config):
     root.join()
     root.teardown()
 
+def run_toggle_relay_N(number):
+    run_toggle_relay(frozenset({"relay"}), number)
+    run_toggle_relay(frozenset({"group_number"}), number)
+    run_toggle_relay(frozenset({"relay", "group_number"}), number)
+
 def test_toggle_relay_0(caplog):
     caplog.set_level(logging.INFO)
-    config = {"driver": "PiFaceInterface", "init_board": False, "relay": 0}
-    run_toggle_relay_N(config)
+    run_toggle_relay_N(0)
 
 def test_toggle_relay_1(caplog):
     caplog.set_level(logging.INFO)
-    config = {"driver": "PiFaceInterface", "init_board": False, "relay": 1}
-    run_toggle_relay_N(config)
+    run_toggle_relay_N(1)
+
+# rmv def test_toggle_relay_1(caplog):
+# rmv     caplog.set_level(logging.INFO)
+# rmv     config = {"driver": "PiFaceInterface", "init_board": True, "relay": 1}
+# rmv     run_toggle_relay_N(config)
 
