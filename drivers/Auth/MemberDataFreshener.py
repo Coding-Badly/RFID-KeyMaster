@@ -74,7 +74,7 @@ class MemberDataFreshener(DriverBase):
         if response.status_code == requests.codes.ok:
             try:
                 data = response.json()
-                self.convert_json_to_internal(data)
+                #self.convert_json_to_internal(data)
                 self.publish(Signals.FRESH_DATA, data)
                 logger.info('Fresh member data published.')
                 etag = fix_etag(response.headers)
