@@ -1,0 +1,18 @@
+
+# https://github.com/pi-plates
+
+sudo pip3 install pi-plates
+sudo pip3 install spidev 
+sudo pip3 install RPi.GPIO
+
+import piplates.RELAYplate as RELAY
+
+RELAY.getID(0)
+
+RELAY.relayON(0,3)
+RELAY.relayOFF(0,3)
+
+RELAY.setLED(0)
+RELAY.clrLED(0)
+RELAY.toggleLED(0)
+
