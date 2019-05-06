@@ -127,8 +127,6 @@ def test_SecurityContext(caplog):
     tm2.add_permission('power','On/off switch.')
     tm2.add_group('small', ['power'])
     tm2.add_group('large', ['unlock','power'])
-    logger.info(tm1)
-    logger.info(tm2)
     assert tm1 == tm2
     tm1 = SecurityContext(groups=[
             ('small','power'),

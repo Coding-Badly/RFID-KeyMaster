@@ -34,3 +34,8 @@ def shared_data_path(request):
 def tmpdirn2(tmp_path):
     return Path(str(tmp_path))
 
+@pytest.fixture(scope="module")
+def config_MemberDataFreshener():
+    return {'remote_cache_url':'https://www.rowdydogsoftware.com/TKRn2uZNBSCSBcTUPRFPhHBL/adcache.json','poll_rate':2.5}
+    #return {'remote_cache_url':'https://www.rowdydogsoftware.com/TKRn2uZNBSCSBcTUPRFPhHBL/adcache.json'}
+

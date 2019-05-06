@@ -23,9 +23,6 @@
 
 ============================================================================="""
 from collections.abc import Mapping
-import logging
-
-logger = logging.getLogger(__name__)
 
 class Permission():
     def __init__(self, codename, name=None):

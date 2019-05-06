@@ -29,11 +29,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def test_freshen_member_data(caplog):
+def test_freshen_member_data(caplog, config_MemberDataFreshener):
     caplog.set_level(logging.INFO)
     root = DriverGroup('root')
     mdc = root.add(MemberDataCacher('Member Data Cacher', None, None, None))
-    mdf = root.add(MemberDataFreshener('Member Data Freshner', None, None, None))
+    mdf = root.add(MemberDataFreshener('Member Data Freshner', config_MemberDataFreshener, None, None))
     dor = root.add(RunForSeconds(5.0))
     root.setup()
     root.start()

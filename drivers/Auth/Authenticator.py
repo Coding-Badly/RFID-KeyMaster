@@ -27,8 +27,43 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# user_logged_in
+#   user
+# user_logged_out
+#   user
+# user_login_failed
+#   credentials
+
+class AuthenticatorData():
+    def __init__(self, rfid):
+        self._rfid = rfid
+        self._username = None
+        self._human_name = None
+        self._groups = []
+    def __str__(self):
+        t1 = self._human_name if self._human_name else 'n/a'
+        t2 = ' (' + self._username + ')' if self._username else ''
+        return '{!s}: {!s}{!s} {!s}'.format(self._rfid, t1, t2, self._groups)
+    def from_member_data(self, member_data):
+        user_data = member_data['user']
+        self._username = user_data['username']
+        self._human_name = user_data['fullName']
+        self._groups = user_data['groups']
+    @property
+    def rfid(self):
+        return self._rfid
+    @property
+    def username(self):
+        return self._username
+    @property
+    def human_name(self):
+        return self._human_name
+    @property
+    def groups_as_list(self):
+        return self._groups
+
 class Authenticator(DriverBase):
-    _events_ = [Signals.LOGIN_RFID_NOT_FOUND, Signals.LOGIN_PERMISSION_DENIED, Signals.LOGIN_SUCCESS]
+    _events_ = [Signals.USER_LOGGED_IN, Signals.USER_LOGIN_FAILED]
     def setup(self):
         super().setup()
         self._have_fresh_data = False
@@ -47,7 +82,10 @@ class Authenticator(DriverBase):
         self._have_fresh_data = True
     def receive_swipe_10(self, timestamp, rfid):
         member_data = self._member_data.get(rfid, None)
+        t1 = AuthenticatorData(rfid)
         if member_data:
-            pass
+            t1.from_member_data(member_data)
+            self.publish(Signals.USER_LOGGED_IN, t1)
         else:
-            self.publish(Signals.LOGIN_RFID_NOT_FOUND, rfid)
+            # fix? Should MemberDataFreshener check for fresh data?
+            self.publish(Signals.USER_LOGIN_FAILED, t1)

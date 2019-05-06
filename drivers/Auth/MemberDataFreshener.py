@@ -90,14 +90,14 @@ class MemberDataFreshener(DriverBase):
     def setup(self):
         super().setup()
         logger.info('MemberDataFreshener.setup...')
-        self._remote_cache_url = 'https://www.rowdydogsoftware.com/TKRn2uZNBSCSBcTUPRFPhHBL/adcache.json'
+        self._remote_cache_url = self.config.get('remote_cache_url', 'https://httpstat.us/404')
+        self._poll_rate = float(self.config.get('poll_rate', 60.0))
         self._request_headers = {}
         self._session = requests.Session()
         logger.info('MemberDataFreshener.setup fini.')
     def startup(self):
         super().startup()
-        # fix self.call_every(60.0, self.poll_for_fresh_data, fire_now=True)
-        self.call_every(2.5, self.poll_for_fresh_data, fire_now=True) # rmv
+        self.call_every(self._poll_rate, self.poll_for_fresh_data, fire_now=True)
         self.open_for_business()
     def teardown(self):
         self._session.close()

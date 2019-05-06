@@ -89,7 +89,6 @@ class MemberDataCacher(DriverBase):
         super()._after_init()
         # rmv? self._file_manager = MemberDataCacheFileAsJson()
         self._file_manager = MemberDataCacheFileAsPickleGzip()
-        # rmv self._path = get_cache_path() / 'MemberData.json'
     def setup(self):
         super().setup()
         self.subscribe(None, Signals.FRESH_DATA, self.receive_fresh_data)
@@ -100,33 +99,15 @@ class MemberDataCacher(DriverBase):
         while keep_trying:
             keep_trying = False
             try:
-                data = self._file_manager.load()
-                self.publish(Signals.CACHED_DATA, data)
+                self.publish(Signals.CACHED_DATA, self._file_manager.load())
                 logger.info('Cached member data published.')
             except FileNotFoundError:
                 logger.warning('Cached member data not available.')
             except RetryLoad:
                 logger.error('Cached member data is corrupt.')
                 keep_trying = True
-            # rmv try:
-            # rmv     with two_phase_open(self._path, 'rt') as f:
-            # rmv         data = json.load(f)
-            # rmv     self.publish(Signals.CACHED_DATA, data)
-            # rmv     logger.info('Cached member data published.')
-            # rmv except FileNotFoundError:
-            # rmv     logger.warning('Cached member data not available.')
-            # rmv # fix: https://docs.python.org/3/library/pickle.html#pickle.UnpicklingError
-            # rmv # fix: pickle.PickleError
-            # rmv # fix: AttributeError, EOFError, ImportError, IndexError
-            # rmv # fix: Exception
-            # rmv except json.decoder.JSONDecodeError:
-            # rmv     logger.error('Cached member data is corrupt.')
-            # rmv     self._path.unlink()
-            # rmv     keep_trying = True
     def receive_fresh_data(self, data):
         self._file_manager.dump(data)
-        # rmv with two_phase_open(self._path, 'wt') as f:
-        # rmv     json.dump(data, f)
     def get_path(self):
         return self._file_manager.get_path()
 
