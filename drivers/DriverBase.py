@@ -25,7 +25,7 @@
   limitations under the License.
 
 ============================================================================="""
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from drivers import Signals
 from threading import Thread, Event
 from exceptions.DriverWontStartError import DriverWontStartError
@@ -64,6 +64,7 @@ class DriverGroup(OrderedDict):
         self._parent = None
         self._name = name if name else get_next_name()
         self._flattened = None
+        self._in_start_order = None
         self._startable = list()
 
     @property
@@ -74,6 +75,7 @@ class DriverGroup(OrderedDict):
         assert (driver_or_group._parent == default_driver_parent) \
                 or (driver_or_group._parent is None)
         assert self._flattened is None
+        assert self._in_start_order is None
         self[driver_or_group.name] = driver_or_group
         driver_or_group._parent = self
         return driver_or_group
@@ -108,6 +110,36 @@ class DriverGroup(OrderedDict):
         if self._flattened is None:
             self._flattened = self.flatten()
         return self._flattened
+
+    def _check_in_start_order(self):
+        if self._in_start_order is None:
+            # Toplogical sort of the drivers by subscribe dependency.
+            in_start_order = list()
+            no_incoming_edge = set()
+            d2s_edges = defaultdict(set)
+            flattened = self._check_flattened()
+            # fix? There is an unchecked assumption that len(flattened) > 0.
+            for driver in flattened:
+                if len(driver._start_before) == 0:
+                    no_incoming_edge.add(driver)
+                else:
+                    for rover in driver._start_before:
+                        d2s_edges[rover].add(driver)
+            # If no_incoming_edge is empty we're stuffed.
+            assert len(no_incoming_edge) > 0
+            while no_incoming_edge:
+                driver = no_incoming_edge.pop()
+                in_start_order.append(driver)
+                for src in d2s_edges[driver]:
+                    src._start_before.remove(driver)
+                    if len(src._start_before) == 0:
+                        no_incoming_edge.add(src)
+                del d2s_edges[driver]
+            assert len(no_incoming_edge) == 0
+            assert len(d2s_edges) == 0
+            # fix? Set all driver._start_before to None?
+            self._in_start_order = in_start_order
+        return self._in_start_order
 
     def find_driver_by_event(self, event_name, skip=None):
         # Breadth-first search down then working up.
@@ -170,7 +202,7 @@ class DriverGroup(OrderedDict):
             driver.setup()
 
     def start(self):
-        drivers_in_start_order = sorted(self._check_flattened(), key=methodcaller('start_order'))
+        drivers_in_start_order = self._check_in_start_order()
         not_ok_to_start = [driver for driver in drivers_in_start_order if not driver.ok_to_start()]
         if not_ok_to_start:
             raise DriverWontStartError(not_ok_to_start)
@@ -337,6 +369,7 @@ class DriverBase(Thread, Dispatcher):
         self.loader = loader
         self.id = id
         self._event_thunks = list()
+        self._start_before = set()
         # fix: Use the following instead of returning a Boolean from setup.
         self._ok_to_start = True
         super().__init__(name=name)
@@ -372,7 +405,7 @@ class DriverBase(Thread, Dispatcher):
             raise RequiredDriverException(driver_name)
         return driver  
 
-    def subscribe(self, driver_name, event_name, id, raise_on_not_found=True, skip_self=True):
+    def subscribe(self, driver_name, event_name, id, determines_start_order=True, raise_on_not_found=True, skip_self=True):
         if driver_name is None:
             partner = self.find_driver_by_event(event_name, skip_self)
             if partner is None:
@@ -389,6 +422,8 @@ class DriverBase(Thread, Dispatcher):
                     return False
         thunk = DriverThunk(partner, event_name, id, self._event_queue)
         self._event_thunks.append(thunk)
+        if (partner != self) and (determines_start_order):
+            partner._start_before.add(self)
         return True
 
     def publish(self, event_name, *args, **kwargs):
@@ -463,13 +498,11 @@ class DriverBase(Thread, Dispatcher):
         self._event_queue.setup()
         self._timelets = list()
         self._open_for_business = Event()
-        self.subscribe(None, Signals.STOP_NOW, self._stop_now, False, False)
-
-    def start_order(self):
-        return 50
+        self.subscribe(None, Signals.STOP_NOW, self._stop_now, raise_on_not_found=False, skip_self=False)
 
     def startup(self):
         self._keep_running = self._ok_to_start
+        self._start_before = None
 
     def loop(self):
         while self._keep_running:
@@ -509,8 +542,6 @@ class DriverBase(Thread, Dispatcher):
 
 class DeathOfRats(DriverBase):
     _events_ = [Signals.STOP_NOW]
-    def start_order(self):
-        return 99
     def startup(self):
         super().startup()
         self.open_for_business()

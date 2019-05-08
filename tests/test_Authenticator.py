@@ -33,8 +33,8 @@ class MemberDataAndSwipe10Stub(DriverBase):
     _events_ = [Signals.CACHED_DATA, Signals.FRESH_DATA, Signals.SWIPE_10]
     def setup(self):
         super().setup()
-        self.subscribe(None, Signals.USER_LOGGED_IN, self.receive_user_logged_in)
-        self.subscribe(None, Signals.USER_LOGIN_FAILED, self.receive_user_login_failed)
+        self.subscribe(None, Signals.USER_LOGGED_IN, self.receive_user_logged_in, determines_start_order=False)
+        self.subscribe(None, Signals.USER_LOGIN_FAILED, self.receive_user_login_failed, determines_start_order=False)
     def startup(self):
         super().startup()
         self.open_for_business()

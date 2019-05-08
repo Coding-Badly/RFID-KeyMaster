@@ -37,13 +37,11 @@ class PingN(DriverBase):
     def startup(self):
         super().startup()
         self.open_for_business()
-    def start_order(self):
-        return 70
 
 class Ping1(PingN):
     def setup(self):
         super().setup()
-        self.subscribe('Pong1', 'receive_ball', 13)
+        self.subscribe('Pong1', 'receive_ball', 13, determines_start_order=False)
         return True  # rmv
     def startup(self):
         super().startup()
@@ -67,7 +65,7 @@ class Ping1(PingN):
 class Ping2(PingN):
     def setup(self):
         super().setup()
-        self.subscribe(None, 'receive_ball', self.receive_ball)
+        self.subscribe(None, 'receive_ball', self.receive_ball, determines_start_order=False)
     def startup(self):
         super().startup()
         self.publish('receive_ball', 1)

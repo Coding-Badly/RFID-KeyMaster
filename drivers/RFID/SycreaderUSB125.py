@@ -123,11 +123,6 @@ class SycreaderUSB125(DriverBase):
         self._device = find_an_saor_rfid_readers()[self._reader]
         self._parser = SycreaderParser()
         self.register(self._device, selectors.EVENT_READ, self.process)
-    def start_order(self):
-        # Start at a very low priority so the rest of the gadget comes to
-        # life first.  There is no point in getting input from the human if
-        # there is nothing to process that input.
-        return 90
     def startup(self):
         super().startup()
         self.open_for_business()
