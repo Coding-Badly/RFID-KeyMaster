@@ -63,7 +63,7 @@ class SimplePrintTagController(DriverBase):
         self._tags['0006276739'] = NormalTag('Red')
         self._tags['0016182332'] = StopTag('Yellow')
         self._reader = int(self.config.get('reader', 0))
-        self.subscribe(None, Signals.SWIPE_10, self.receive_swipe_10)
+        self.subscribe(None, Signals.SWIPE_10, self.receive_swipe_10, determines_start_order=False)
     def startup(self):
         super().startup()
         self.open_for_business()
