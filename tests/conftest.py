@@ -27,6 +27,9 @@ def pytest_addoption(parser):
         "--exercise_piface_relays", action="store_true", default=False, help="Toggle the two PiFace Digital 2 relays a few times."
     )
     parser.addoption(
+        "--exercise_rfid_readers", action="store_true", default=False, help="Exercise all attached RFID readers."
+    )
+    parser.addoption(
         "--exercise_hardware", action="store_true", default=False, help="Exercise all the hardware that can be automatically identified."
     )
 
@@ -55,5 +58,11 @@ def exercise_hardware(request):
 def exercise_piface_relays(request, exercise_hardware):
     rv = exercise_hardware or \
         request.config.getoption("--exercise_piface_relays")
+    return rv
+
+@pytest.fixture(scope="module")
+def exercise_rfid_readers(request, exercise_hardware):
+    rv = exercise_hardware or \
+        request.config.getoption("--exercise_rfid_readers")
     return rv
 

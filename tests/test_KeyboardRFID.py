@@ -27,5 +27,6 @@ if platform.system() == 'Windows':
 
 from drivers.RFID.KeyboardRFID import KeyboardRFID
 
-def test_simple_construction():
-    tm1 = KeyboardRFID(None, None, None)
+def test_simple_construction(exercise_rfid_readers):
+    if exercise_rfid_readers:
+        tm1 = KeyboardRFID(None, None, None)

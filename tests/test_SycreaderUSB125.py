@@ -108,11 +108,12 @@ def run_all_readers_at_once(which):
     logger.info('Scan away...')
     run_root(root)
 
-def test_all_readers_at_once(caplog):
-    caplog.set_level(logging.INFO)
-    run_all_readers_at_once(frozenset({"reader", "group_number"}))
-    run_all_readers_at_once(frozenset({"reader"}))
-    run_all_readers_at_once(frozenset({"group_number"}))
+def test_all_readers_at_once(caplog, exercise_rfid_readers):
+    if exercise_rfid_readers:
+        caplog.set_level(logging.INFO)
+        run_all_readers_at_once(frozenset({"reader", "group_number"}))
+        run_all_readers_at_once(frozenset({"reader"}))
+        run_all_readers_at_once(frozenset({"group_number"}))
 
 # rmv def test_reader_1(caplog):
 # rmv     caplog.set_level(logging.INFO)
