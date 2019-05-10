@@ -22,6 +22,14 @@
 from pathlib import Path
 import pytest
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--exercise_piface_relays", action="store_true", default=False, help="Toggle the two PiFace Digital 2 relays a few times."
+    )
+    parser.addoption(
+        "--exercise_hardware", action="store_true", default=False, help="Exercise all the hardware that can be automatically identified."
+    )
+
 @pytest.fixture(scope="module")
 def shared_data_path(request):
     base = Path(request.fspath.dirname)
@@ -38,4 +46,14 @@ def tmpdirn2(tmp_path):
 def config_MemberDataFreshener():
     return {'remote_cache_url':'https://www.rowdydogsoftware.com/TKRn2uZNBSCSBcTUPRFPhHBL/adcache.json','poll_rate':2.5}
     #return {'remote_cache_url':'https://www.rowdydogsoftware.com/TKRn2uZNBSCSBcTUPRFPhHBL/adcache.json'}
+
+@pytest.fixture(scope="module")
+def exercise_hardware(request):
+    return request.config.getoption("--exercise_hardware")
+
+@pytest.fixture(scope="module")
+def exercise_piface_relays(request, exercise_hardware):
+    rv = exercise_hardware or \
+        request.config.getoption("--exercise_piface_relays")
+    return rv
 

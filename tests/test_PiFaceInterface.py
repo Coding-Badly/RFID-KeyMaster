@@ -66,13 +66,15 @@ def run_toggle_relay_N(number):
     run_toggle_relay(frozenset({"group_number"}), number)
     run_toggle_relay(frozenset({"relay", "group_number"}), number)
 
-def test_toggle_relay_0(caplog):
-    caplog.set_level(logging.INFO)
-    run_toggle_relay_N(0)
+def test_toggle_relay_0(caplog, exercise_piface_relays):
+    if exercise_piface_relays:
+        caplog.set_level(logging.INFO)
+        run_toggle_relay_N(0)
 
-def test_toggle_relay_1(caplog):
-    caplog.set_level(logging.INFO)
-    run_toggle_relay_N(1)
+def test_toggle_relay_1(caplog, exercise_piface_relays):
+    if exercise_piface_relays:
+        caplog.set_level(logging.INFO)
+        run_toggle_relay_N(1)
 
 # rmv def test_toggle_relay_1(caplog):
 # rmv     caplog.set_level(logging.INFO)
