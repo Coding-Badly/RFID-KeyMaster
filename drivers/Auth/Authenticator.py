@@ -48,7 +48,7 @@ class AuthenticatorData():
         user_data = member_data['user']
         self._username = user_data['username']
         self._human_name = user_data['fullName']
-        self._groups = user_data['groups']
+        self._groups = frozenset(user_data['groups'])
     @property
     def rfid(self):
         return self._rfid
@@ -59,7 +59,7 @@ class AuthenticatorData():
     def human_name(self):
         return self._human_name
     @property
-    def groups_as_list(self):
+    def groups(self):
         return self._groups
 
 class Authenticator(DriverBase):
@@ -87,5 +87,5 @@ class Authenticator(DriverBase):
             t1.from_member_data(member_data)
             self.publish(Signals.USER_LOGGED_IN, t1)
         else:
-            # fix? Should MemberDataFreshener check for fresh data?
+            # fix? Should MemberDataFreshener check for fresh data when a login failure occurs?
             self.publish(Signals.USER_LOGIN_FAILED, t1)
