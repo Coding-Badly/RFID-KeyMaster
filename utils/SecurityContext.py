@@ -113,7 +113,7 @@ class SecurityContext():
                 rv.add(self.add_permission(rover, None))
     def _iterate_add_groups(self, groups):
         for rover in groups:
-            if isinstance(rover, tuple) and (len(rover) > 1):
+            if (isinstance(rover, tuple) or isinstance(rover, list)) and (len(rover) > 1):
                 self.add_group(rover[0], rover[1])
             else:
                 self.add_group(rover, None)
