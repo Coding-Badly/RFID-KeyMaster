@@ -31,8 +31,15 @@ class Authorizer(DriverBase):
     # fix _events_ = [Signals.USER_LOGGED_IN, Signals.USER_LOGIN_FAILED]
     def setup(self):
         super().setup()
-        # self._remote_cache_url = self.config.get('remote_cache_url', 'https://httpstat.us/404')
-        # SecurityContext(permissions=None, groups=None)
+        self._context = SecurityContext(
+            permissions={
+                'power':'User can enable power for the tool.', 
+                'unlock':'User can release the latch to gain access.',
+                'generic':'Generic permission to ease configuration.'})
+        groups = self.config.get('groups', None)
+        if groups:
+            self._context.add_groups(groups)
+            logger.info(self._context)
         # fix self.subscribe(None, Signals.USER_LOGGED_IN, self.receive_user_logged_in)
     def startup(self):
         super().startup()

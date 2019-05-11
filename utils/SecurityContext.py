@@ -155,4 +155,17 @@ class SecurityContext():
             rv._permissions = self._prepare_permissions_to_use(permissions)
             self._groups[name] = rv
         return rv
+    def add_groups(self, groups):
+        if isinstance(groups, Mapping):
+            for rover in groups:
+                self.add_group(rover, groups[rover])
+        elif isinstance(groups, str):
+            self.add_group(groups, None)
+        elif isinstance(groups, tuple):
+            if isinstance(groups[0], tuple):
+                self._iterate_add_groups(groups)
+            else:
+                self.add_group(groups[0], groups[1])
+        elif groups:
+            self._iterate_add_groups(groups)
 
