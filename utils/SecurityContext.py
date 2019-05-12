@@ -23,6 +23,9 @@
 
 ============================================================================="""
 from collections.abc import Mapping
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Permission():
     def __init__(self, codename, name=None):
@@ -76,20 +79,10 @@ class SecurityContext():
     def __init__(self, permissions=None, groups=None):
         self._permissions = dict()
         self._groups = dict()
+        self._effective_rights = dict()
         if permissions:
             _ = self._prepare_permissions_to_use(permissions)
-        if isinstance(groups, Mapping):
-            for rover in groups:
-                self.add_group(rover, groups[rover])
-        elif isinstance(groups, str):
-            self.add_group(groups, None)
-        elif isinstance(groups, tuple):
-            if isinstance(groups[0], tuple):
-                self._iterate_add_groups(groups)
-            else:
-                self.add_group(groups[0], groups[1])
-        elif groups:
-            self._iterate_add_groups(groups)
+        self.add_groups(groups)
     def __eq__(self, other):
         if isinstance(other, SecurityContext) \
                 and (self._permissions == other._permissions) \
@@ -107,16 +100,16 @@ class SecurityContext():
             format(repr_init_list(self._permissions,8), repr_init_list(self._groups, 8))
     def _iterate_add_permissions(self, rv, permissions):
         for rover in permissions:
-            if isinstance(rover, tuple) and (len(rover) > 1):
+            if (isinstance(rover, tuple) or isinstance(rover, list)) and (len(rover) > 1):
                 rv.add(self.add_permission(rover[0], rover[1]))
             else:
                 rv.add(self.add_permission(rover, None))
     def _iterate_add_groups(self, groups):
         for rover in groups:
             if (isinstance(rover, tuple) or isinstance(rover, list)) and (len(rover) > 1):
-                self.add_group(rover[0], rover[1])
+                self._add_group(rover[0], rover[1])
             else:
-                self.add_group(rover, None)
+                self._add_group(rover, None)
     def _prepare_permissions_to_use(self, permissions):
         rv = set()
         if isinstance(permissions, Mapping):
@@ -144,7 +137,7 @@ class SecurityContext():
         #    # Ignore name?
         #    pass
         return rv
-    def add_group(self, name, permissions=None):
+    def _add_group(self, name, permissions=None):
         rv = self._groups.get(name, None)
         if rv:
             if permissions:
@@ -155,17 +148,29 @@ class SecurityContext():
             rv._permissions = self._prepare_permissions_to_use(permissions)
             self._groups[name] = rv
         return rv
+    def add_group(self, name, permissions=None):
+        self._effective_rights.clear()
+        return self._add_group(name, permissions)
     def add_groups(self, groups):
+        self._effective_rights.clear()
         if isinstance(groups, Mapping):
             for rover in groups:
-                self.add_group(rover, groups[rover])
+                self._add_group(rover, groups[rover])
         elif isinstance(groups, str):
-            self.add_group(groups, None)
+            self._add_group(groups, None)
         elif isinstance(groups, tuple):
             if isinstance(groups[0], tuple):
                 self._iterate_add_groups(groups)
             else:
-                self.add_group(groups[0], groups[1])
+                self._add_group(groups[0], groups[1])
         elif groups:
             self._iterate_add_groups(groups)
-
+    def get_effective_rights(self, groups):
+        effective_rights = self._effective_rights.get(groups, None)
+        if not effective_rights:
+            effective_rights = set()
+            for rover in groups:
+                group = self._add_group(rover)
+                effective_rights |= group._permissions
+            self._effective_rights[groups] = effective_rights
+        return effective_rights

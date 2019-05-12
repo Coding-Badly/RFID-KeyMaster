@@ -33,6 +33,7 @@ class MemberDataAndSwipe10Stub(DriverBase):
     _events_ = [Signals.CACHED_DATA, Signals.FRESH_DATA, Signals.SWIPE_10]
     def setup(self):
         super().setup()
+        self._death_of_rats = self.config.get('DeathOfRats', None)
         self.subscribe(None, Signals.USER_LOGGED_IN, self.receive_user_logged_in, determines_start_order=False)
         self.subscribe(None, Signals.USER_LOGIN_FAILED, self.receive_user_login_failed, determines_start_order=False)
     def startup(self):
@@ -65,6 +66,8 @@ class MemberDataAndSwipe10Stub(DriverBase):
             self.publish(Signals.SWIPE_10, monotonic(), '0004134263')  # black tag
         elif authenticator_data.rfid == '0004134263':  # black tag
             self.fini = True
+            if self._death_of_rats:
+                self._death_of_rats.stop_all()
     def receive_user_login_failed(self, authenticator_data):
         logger.info('FAIL: %s', authenticator_data)
         if authenticator_data.rfid == '0000721130':  # Brian's tag
@@ -90,11 +93,11 @@ class MemberDataAndSwipe10Stub(DriverBase):
             self.publish(Signals.SWIPE_10, monotonic(), '0008683072')  # purple tag
 
 def test_Authenticator(caplog):
-    caplog.set_level(logging.INFO)
+    #caplog.set_level(logging.INFO)
     root = DriverGroup('root')
-    aut = root.add(Authenticator('Default Authenticator', None, None, None))
-    stu = root.add(MemberDataAndSwipe10Stub('Stub', None, None, None))
     dor = root.add(RunForSeconds(1.0))
+    aut = root.add(Authenticator('Default Authenticator', None, None, None))
+    stu = root.add(MemberDataAndSwipe10Stub('Stub', {'DeathOfRats':dor}, None, None))
     root.setup()
     root.start()
     root.join()
