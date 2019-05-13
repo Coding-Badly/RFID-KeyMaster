@@ -29,7 +29,6 @@ from drivers import Signals
 from drivers.DriverBase import DriverBase, DriverGroup
 from drivers.RFID.SycreaderUSB125 import SycreaderUSB125
 from drivers.RFID.SycreaderUSB125 import find_an_saor_rfid_readers
-from drivers.Test.RunForSeconds import RunForSeconds
 import logging
 
 logger = logging.getLogger(__name__)
@@ -46,7 +45,6 @@ class NormalTag(TagBase):
 class StopTag(TagBase):
     def action(self, target):
         super().action(target)
-        # rmv target._stop_now()
         target.publish(Signals.STOP_NOW)
         return 'stop'
 
@@ -86,15 +84,7 @@ def run_root(root):
 
 def run_rfid_reader(config):
     root = create_rfid_reader(config)
-    # rmv dor = root.add(RunForSeconds(10.0))
     run_root(root)
-
-# rmv def test_all_readers_individually(caplog):
-# rmv     caplog.set_level(logging.INFO)
-# rmv     for i1 in range(len(find_an_saor_rfid_readers())):
-# rmv         logger.info('#{}...'.format(i1))
-# rmv         config = {"driver": "SycreaderUSB125", "reader": i1, "group_number": i1}
-# rmv         run_rfid_reader(config)
 
 def run_all_readers_at_once(which):
     root = DriverGroup()
@@ -114,9 +104,4 @@ def test_all_readers_at_once(caplog, exercise_rfid_readers):
         run_all_readers_at_once(frozenset({"reader", "group_number"}))
         run_all_readers_at_once(frozenset({"reader"}))
         run_all_readers_at_once(frozenset({"group_number"}))
-
-# rmv def test_reader_1(caplog):
-# rmv     caplog.set_level(logging.INFO)
-# rmv     config = {"driver": "SycreaderUSB125", "reader": 1}
-# rmv     run_rfid_reader(config)
 

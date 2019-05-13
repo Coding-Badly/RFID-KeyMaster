@@ -1,7 +1,9 @@
 """=============================================================================
 
-  Authorizer for RFID-KeyMaster.  Authorizer determines what the human is
-  allowed to do from their group membership set.
+  AutomaticLogout for RFID-KeyMaster.  AutomaticLogout automatically logs-out
+  the current user when a set of specified conditions are met.  The conditions
+  for power are: no current flow detected in the previous five minutes and the
+  same person has been logged-in for those five minutes.
 
   ----------------------------------------------------------------------------
 
@@ -22,30 +24,23 @@
 ============================================================================="""
 from drivers import Signals
 from drivers.DriverBase import DriverBase
-from utils.SecurityContext import SecurityContext
-import logging
 
-logger = logging.getLogger(__name__)
-
-class Authorizer(DriverBase):
-    _events_ = [Signals.USER_AUTHORIZED]
+class AutomaticLogout(DriverBase):
     def setup(self):
         super().setup()
-        self._context = SecurityContext(
-            permissions={
-                'power':'User can enable power for the tool.', 
-                'unlock':'User can release the latch to gain access.',
-                'generic':'Generic permission to ease configuration.'})
-        groups = self.config.get('groups', None)
-        if groups:
-            self._context.add_groups(groups)
         self.subscribe(None, Signals.USER_LOGGED_IN, self.receive_user_logged_in)
+        self.subscribe(None, Signals.USER_LOGIN_FAILED, self.receive_user_login_failed)
+        self.subscribe(None, Signals.USER_AUTHORIZED, self.receive_user_authorized)
     def startup(self):
         super().startup()
         self.open_for_business()
     def receive_user_logged_in(self, data):
-        # data is an instance of AuthenticatorData
-        effective_rights = self._context.get_effective_rights(data.groups)
-        data.effective_rights = effective_rights
-        data.authorized = len(effective_rights) > 0
-        self.publish(Signals.USER_AUTHORIZED, data)
+        # Note: data is an AuthenticatorData instance.
+        pass
+    def receive_user_login_failed(self, data):
+        # Note: data is an AuthenticatorData instance.
+        pass
+    def receive_user_authorized(self, data):
+        # Note: data is an AuthenticatorData instance with effective_rights and authorized added
+        pass
+
