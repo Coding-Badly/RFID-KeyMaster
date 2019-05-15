@@ -27,6 +27,8 @@ class Configuration(UserDict):
     def __init__(self, initial_data):
         t1 = Configuration.make_keys_lower(initial_data)
         t1['groups'] = frozenset(group.lower() for group in t1.get('groups',{}))
+        if not 'root' in t1:
+            t1['root'] = []
         super().__init__(t1)
     def get_by_path(self, path, default=None):
         if isinstance(path, str):

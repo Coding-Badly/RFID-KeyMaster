@@ -22,7 +22,10 @@
 
 ============================================================================="""
 from drivers.DriverBase import DriverBase
+import logging
 import queue
+
+logger = logging.getLogger(__name__)
 
 class PingN(DriverBase):
     _events_ = ['receive_ball']
@@ -56,6 +59,9 @@ class Ping1(PingN):
             return True
         except queue.Empty:
             pass
+        dor = self.find_driver_by_name('DeathOfRats', True)
+        if dor:
+            dor.stop_all()
         return False
 
 class Ping2(PingN):
