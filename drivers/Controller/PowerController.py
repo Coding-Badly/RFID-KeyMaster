@@ -47,18 +47,19 @@ class PowerController(DriverBase):
         self._target_state = new_state
     def receive_user_authorized(self, data):
         if data.authorized and (self._power_permission in data.effective_rights):
+            # Log an info
             self._current_user = data
             # Power on!
             self._control_target(True)
-        # Otherwise
+        else:
             # Log a warning.
-            # self._current_user = None
+            self._current_user = None
             self._control_target(False)
     def receive_user_login_failed(self, data):
         # Power off!
         # Issue a warning.
         # Don't power off if current is flowing?
         # Issue a warning if current is flowing?
-        # self._current_user = None
+        self._current_user = None
         self._control_target(False)
 
