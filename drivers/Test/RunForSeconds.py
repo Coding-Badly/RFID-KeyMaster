@@ -27,9 +27,9 @@ from drivers.DriverBase import DriverBase, DeathOfRats
 # logger = logging.getLogger(__name__)
 
 class RunForSeconds(DeathOfRats):
-    def __init__(self, seconds):
-        super().__init__('RunForSeconds', None, None, None)
-        self._seconds = seconds
+    def setup(self):
+        super().setup()
+        self._seconds = float(self.config.get('seconds', 1.0))
     def startup(self):
         super().startup()
         self.call_after(self._seconds, self._stop_now)

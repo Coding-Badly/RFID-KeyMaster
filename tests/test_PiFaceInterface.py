@@ -53,7 +53,7 @@ def run_toggle_relay(which, number):
         config["group_number"] = number
     root = DriverGroup()
     #dor = root.add(DeathOfRats(name='DeathOfRats', config=None, loader=None, id=None))
-    dor = root.add(RunForSeconds(10.0))
+    dor = root.add(RunForSeconds({'seconds':10.0}))
     pf1 = root.add(PiFaceInterface(name='Test Me', config=config, loader=None, id=None))
     tm1 = root.add(SimpleToggleController(name='Simple Toggle Controller', config=None, loader=None, id=None))
     root.setup()

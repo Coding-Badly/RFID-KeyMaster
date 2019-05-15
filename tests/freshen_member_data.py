@@ -34,7 +34,7 @@ def test_freshen_member_data(caplog, config_MemberDataFreshener):
     root = DriverGroup('root')
     mdc = root.add(MemberDataCacher('Member Data Cacher', None, None, None))
     mdf = root.add(MemberDataFreshener('Member Data Freshner', config_MemberDataFreshener, None, None))
-    dor = root.add(RunForSeconds(5.0))
+    dor = root.add(RunForSeconds({'seconds':5.0}))
     root.setup()
     root.start()
     root.join()

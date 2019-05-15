@@ -24,5 +24,5 @@ from drivers.DriverBase import DriverBaseOld
 class RFID(DriverBaseOld):
     _events_ = ['swipe']
 
-    def __init__(self, config, loader, id):
-        super().__init__(config, loader, id)
+    def __init__(self, config):
+        super().__init__(config)

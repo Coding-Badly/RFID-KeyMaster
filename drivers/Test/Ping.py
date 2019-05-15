@@ -26,13 +26,9 @@ import queue
 
 class PingN(DriverBase):
     _events_ = ['receive_ball']
-    def __init__(self, name_to_use=None, stop_at_1000=True):
-        if name_to_use is None:
-            name_to_use = type(self).__name__
-        super().__init__(name_to_use, None, None, None)
-        self._stop_at_1000 = stop_at_1000
     def setup(self):
         super().setup()
+        self._stop_at_1000 = bool(self.config.get('stop_at_1000', True))
         self._last_count = None
     def startup(self):
         super().startup()

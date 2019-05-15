@@ -91,7 +91,7 @@
 
 ============================================================================="""
 
-from exceptions.WritableMismatchError import WritableMismatchError
+from exceptions import WritableMismatchError
 
 import logging
 import pathlib

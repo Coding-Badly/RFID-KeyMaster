@@ -59,7 +59,7 @@ def test_001(caplog, raw_config_001):
     caplog.set_level(logging.INFO)
     config = Configuration(raw_config_001)
     root = DriverGroup('root')
-    dor = root.add(DeathOfRats(name='DeathOfRats', config=config, loader=None, id=None))
+    dor = root.add(DeathOfRats(config=config))
     for group_name in config['groups']:
         group_root = root.add(DriverGroup(group_name))
         group_driver_list = config[group_name]

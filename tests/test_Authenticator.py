@@ -95,9 +95,9 @@ class MemberDataAndSwipe10Stub(DriverBase):
 def test_Authenticator(caplog):
     #caplog.set_level(logging.INFO)
     root = DriverGroup('root')
-    dor = root.add(RunForSeconds(1.0))
-    aut = root.add(Authenticator('Default Authenticator', None, None, None))
-    stu = root.add(MemberDataAndSwipe10Stub('Stub', {'DeathOfRats':dor}, None, None))
+    dor = root.add(RunForSeconds({'seconds':1.0}))
+    aut = root.add(Authenticator(None))
+    stu = root.add(MemberDataAndSwipe10Stub({'DeathOfRats':dor, 'name':'Stub'}))
     root.setup()
     root.start()
     root.join()

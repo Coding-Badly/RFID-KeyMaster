@@ -27,10 +27,6 @@ import queue
 
 class PongN(DriverBase):
     _events_ = ['receive_ball']
-    def __init__(self, name_to_use=None):
-        if name_to_use is None:
-            name_to_use = type(self).__name__
-        super().__init__(name_to_use, None, None, None)
     def startup(self):
         super().startup()
         self.open_for_business()

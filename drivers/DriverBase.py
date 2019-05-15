@@ -28,7 +28,7 @@
 from collections import defaultdict, OrderedDict
 from drivers import Signals
 from threading import Thread, Event
-from exceptions.DriverWontStartError import DriverWontStartError
+from exceptions import DriverWontStartError
 from exceptions.RequiredDriverException import RequiredDriverException
 from exceptions.RequiredEventException import RequiredEventException
 import heapq
@@ -362,17 +362,18 @@ class DriverQueuePlusSelect():
 
 class DriverBase(Thread, Dispatcher):
 
-    def __init__(self, name, config, loader, id):
+    def __init__(self, config):
+    # rmv def __init__(self, config, name, loader, id):
         self._parent = default_driver_parent
-        self._name = name
-        self.config = config
-        self.loader = loader
-        self.id = id
+        self.config = config if config else {}
+        self._name = type(self).__name__
+        # rmv self.loader = loader
+        # rmv self.id = id
         self._event_thunks = list()
         self._start_before = set()
         # fix: Use the following instead of returning a Boolean from setup.
         self._ok_to_start = True
-        super().__init__(name=name)
+        super().__init__(name=self._name)
         self._after_init()
 
     def _after_init(self):
@@ -399,11 +400,11 @@ class DriverBase(Thread, Dispatcher):
         skip = self if skip_self else None
         return self._parent.find_driver_by_name(driver_name, skip)
 
-    def getDriver(self, driver_name, controller=None):
-        driver = self.loader.getDriver(driver_name, controller)
-        if driver == None:
-            raise RequiredDriverException(driver_name)
-        return driver  
+    # rmv def getDriver(self, driver_name, controller=None):
+    # rmv     driver = self.loader.getDriver(driver_name, controller)
+    # rmv     if driver == None:
+    # rmv         raise RequiredDriverException(driver_name)
+    # rmv     return driver  
 
     def subscribe(self, driver_name, event_name, id, determines_start_order=True, raise_on_not_found=True, skip_self=True):
         if driver_name is None:
@@ -551,10 +552,10 @@ class DeathOfRats(DriverBase):
         super().shutdown()
         self.publish(Signals.STOP_NOW)
 
-class DriverBaseOld(DriverBase):
-    def __init__(self, config, loader, id):
-        # fix: Loader needs to become Parent
-        super().__init__(get_next_name(), config, loader, id)
-    def loop(self):
-        return False
+# rmv class DriverBaseOld(DriverBase):
+# rmv     def __init__(self, config, loader, id):
+# rmv         # fix: Loader needs to become Parent
+# rmv         super().__init__(get_next_name(), config, loader, id)
+# rmv     def loop(self):
+# rmv         return False
 
