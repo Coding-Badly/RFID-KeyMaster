@@ -21,7 +21,7 @@
 
 ============================================================================="""
 from utils.LoadableDriverLoader import LoadableDriverLoader
-from exceptions.ClassNotFoundError import ClassNotFoundError
+from exceptions import ClassNotFoundError
 import pytest
 
 def test_001():

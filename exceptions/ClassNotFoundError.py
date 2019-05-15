@@ -23,7 +23,7 @@
 
 ============================================================================="""
 
-class ClassNotFound(Exception):
-    def __init__(self, class_name):
-        super().__init__('The driver class {} cannot be found.'.format(class_name))
+#class ClassNotFoundError(Exception):
+#    def __init__(self, class_name):
+#        super().__init__('The driver class {} cannot be found.'.format(class_name))
 

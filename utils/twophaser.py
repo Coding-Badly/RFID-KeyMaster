@@ -91,7 +91,7 @@
 
 ============================================================================="""
 
-from exceptions.WritableMismatch import WritableMismatch
+from exceptions.WritableMismatchError import WritableMismatchError
 
 import logging
 import pathlib
@@ -143,7 +143,7 @@ class TwoPhaser:
         try:
             self._writable_actual = self._file.writable()
             if self._writable != self._writable_actual:
-                raise WritableMismatch()
+                raise WritableMismatchError()
             logger.debug("%s.__enter__(): success: %s", self, self._file)
         except:
             self._close(False)
@@ -209,8 +209,8 @@ def two_phase_open(*args, **kwargs):
         To work correctly this function has to be used with a with-statement.
     
     Raises:
-        WritableMismatch: An internal check that indicates the code failed to
-            correctly determine is-writable.
+        WritableMismatchError: An internal check that indicates the code 
+            failed to correctly determine is-writable.
         Various I/O exceptions.
 
     Returns:
