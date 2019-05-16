@@ -35,8 +35,7 @@ def raw_config_001():
     },
     "root": [
         {
-            "driver": "RunForSeconds",
-            "seconds": 10.00
+            "driver": "BlackTagBringsDeathOfRats"
         }
     ],
     "groups": ["primary"],
