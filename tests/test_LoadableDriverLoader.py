@@ -27,6 +27,7 @@ from drivers.Test.RunForSeconds import RunForSeconds
 from exceptions import DriverClassNotFoundError
 from utils.Configuration import Configuration
 from utils.LoadableDriverLoader import LoadableDriverLoader
+from utils.LoadableDriverBuilder import LoadableDriverBuilder
 import json
 import logging
 import pytest
@@ -90,14 +91,15 @@ def test_002(caplog, raw_config_002):
     if not create_drivers_from_branch(loader, root, config['root']):
         dor = root.add(DeathOfRats(None))
     create_branch_from_config(loader, root, config, config['groups'])
-    # rmv for group_name in config['groups']:
-    # rmv     group_root = root.add(DriverGroup(group_name))
-    # rmv     group_driver_list = config[group_name]
-    # rmv     for driver_config in group_driver_list:
-    # rmv         driver_name = driver_config['driver']
-    # rmv         module_name = driver_config.get('module', None)
-    # rmv         driver_class = loader.get_driver_class(driver_name, module_name)
-    # rmv         group_root.add(driver_class(driver_config))
+    root.setup()
+    root.start()
+    root.join()
+    root.teardown()
+
+def test_003(caplog, raw_config_002):
+    caplog.set_level(logging.INFO)
+    tm1 = LoadableDriverBuilder(Configuration(raw_config_002))
+    root = tm1.build()
     root.setup()
     root.start()
     root.join()
