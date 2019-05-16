@@ -24,7 +24,7 @@
 
 class DriverClassNameConflict(Exception):
     """One or more drivers have the same class name.
-    
+
     DriverClassNameConflict is raised in LoadableDriverLoader.__init__ if the
     number of driver modules found is not the same as the number of driver
     classes added to the dictionary.  The difference indicates a driver class
@@ -34,7 +34,7 @@ class DriverClassNameConflict(Exception):
 
 class DriverClassNotFoundError(Exception):
     """Driver Class not found trying to load a driver.
-    
+
     :class_name: class name of the driver.
 
     DriverClassNotFoundError is raised in LoadableDriverLoader if class_name
@@ -64,19 +64,30 @@ def driver_class_and_name(driver):
 
 class DriverWontStartError(Exception):
     """Driver indicated it won't start.
-    
+
     :not_ok_to_start: list of drivers (descendents of DriverBase) that
       indicated they won't start
 
-    DriverWontStartError is raised in DriverGroup.start if any drivers have 
+    DriverWontStartError is raised in DriverGroup.start if any drivers have
     indicated that they are not ok_to_start.
     """
     def __init__(self, not_ok_to_start):
         self.not_ok_to_start = not_ok_to_start
         for_the_human = [driver_class_and_name(driver) for driver in not_ok_to_start]
-        self.message = 'A failure with the {} {} prevents the application from starting.'.format(*english_list(for_the_human, 'driver', 'drivers'))
+        super().__init__('A failure with the {} {} prevents the application from starting.'.format(*english_list(for_the_human, 'driver', 'drivers')))
 
 class WritableMismatchError(Exception):
     def __init__(self):
         super().__init__('Guessed writable does not match actual writable.')
+
+class LeftOverEdgesError(Exception):
+    """Cycle detected trying to determine the driver start order.
+
+    LeftOverEdgesError is raised in DriverBase._check_in_start_order if a cycle
+    is detected.  This is typically caused by failing to set
+    determines_start_order to False when a call to subscribe should not
+    determine the driver start order.
+    """
+    def __init__(self):
+        super().__init__('Cycle detected trying to determine the driver start order.  Did you forgot to set determines_start_order to False?')
 

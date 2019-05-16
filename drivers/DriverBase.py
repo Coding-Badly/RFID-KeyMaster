@@ -28,7 +28,7 @@
 from collections import defaultdict, OrderedDict
 from drivers import Signals
 from threading import Thread, Event
-from exceptions import DriverWontStartError
+from exceptions import DriverWontStartError, LeftOverEdgesError
 from exceptions.RequiredDriverException import RequiredDriverException
 from exceptions.RequiredEventException import RequiredEventException
 import heapq
@@ -136,7 +136,8 @@ class DriverGroup(OrderedDict):
                         no_incoming_edge.add(src)
                 del d2s_edges[driver]
             assert len(no_incoming_edge) == 0
-            assert len(d2s_edges) == 0
+            if len(d2s_edges) != 0:
+                raise LeftOverEdgesError()
             # fix? Set all driver._start_before to None?
             self._in_start_order = in_start_order
         return self._in_start_order
