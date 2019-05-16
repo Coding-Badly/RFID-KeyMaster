@@ -50,6 +50,19 @@ def raw_config_001():
         },
         {
             "driver": "SycreaderUSB125"
+        },
+        {
+            "driver": "Authenticator"
+        },
+        {
+            "driver": "Authorizer",
+            "groups": [["Voting Members","power"]]
+        },
+        {
+            "driver": "PowerController"
+        },
+        {
+            "driver": "PiFaceInterface"
         }
     ]
 }
