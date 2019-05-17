@@ -62,7 +62,8 @@ def raw_config_001():
             "driver": "PowerController"
         },
         {
-            "driver": "PiFaceInterface"
+            "driver": "PiFaceDigital2Relays",
+            "module": "PiFaceDigital2Interface"
         }
     ]
 }
@@ -86,7 +87,8 @@ def raw_config_002():
             "driver": "SycreaderUSB125"
         },
         {
-            "driver": "PiFaceDigital2SimulateCurrentSensor"
+            "driver": "PiFaceDigital2SimulateCurrentSensor",
+            "module": "PiFaceDigital2Interface"
         }
     ]
 }

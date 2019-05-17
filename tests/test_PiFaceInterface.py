@@ -1,6 +1,6 @@
 """=============================================================================
 
-  pytest for PiFaceInterface.
+  pytest for PiFaceDigital2Relays.
   
   ----------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ if platform.system() == 'Windows':
 
 from drivers.DriverBase import DriverGroup, DriverBase, DeathOfRats
 from drivers import Signals
-from drivers.Interface.PiFaceInterface import PiFaceInterface
+from drivers.Interface.PiFaceDigital2Interface import PiFaceDigital2Relays
 from drivers.Test.RunForSeconds import RunForSeconds
 import logging
 
@@ -46,7 +46,7 @@ class SimpleToggleController(DriverBase):
         self.publish(Signals.CONTROL_TARGET, self._state)
 
 def run_toggle_relay(which, number):
-    config = {"driver": "PiFaceInterface", "init_board": True}
+    config = {"driver": "PiFaceDigital2Relays", "init_board": True}
     if "relay" in which:
         config["relay"] = number
     if "group_number" in which:
@@ -54,7 +54,7 @@ def run_toggle_relay(which, number):
     root = DriverGroup()
     #dor = root.add(DeathOfRats(name='DeathOfRats', config=None, loader=None, id=None))
     dor = root.add(RunForSeconds({'seconds':10.0}))
-    pf1 = root.add(PiFaceInterface(name='Test Me', config=config, loader=None, id=None))
+    pf1 = root.add(PiFaceDigital2Relays(name='Test Me', config=config, loader=None, id=None))
     tm1 = root.add(SimpleToggleController(name='Simple Toggle Controller', config=None, loader=None, id=None))
     root.setup()
     root.start()
@@ -78,6 +78,6 @@ def test_toggle_relay_1(caplog, exercise_piface_relays):
 
 # rmv def test_toggle_relay_1(caplog):
 # rmv     caplog.set_level(logging.INFO)
-# rmv     config = {"driver": "PiFaceInterface", "init_board": True, "relay": 1}
+# rmv     config = {"driver": "PiFaceDigital2Relays", "init_board": True, "relay": 1}
 # rmv     run_toggle_relay_N(config)
 

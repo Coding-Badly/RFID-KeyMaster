@@ -1,8 +1,11 @@
 """=============================================================================
 
-  PiFaceInterface for RFID-KeyMaster.  PiFaceInterface is a driver for the
-  PiFace Digital 2 HAT.  The PiFace is used to control power to the target,
-  receive input from a pushbutton, and drive an LED.
+  PiFaceDigital2Interface for RFID-KeyMaster.
+
+  PiFaceDigital2Relays is a driver for the relays on the PiFace Digital 2 HAT.
+
+  PiFaceDigital2SimulateCurrentSensor toggles the current flow state when a
+  pushbutton is pressed on the HAT.
 
   ----------------------------------------------------------------------------
 
@@ -24,18 +27,20 @@
 ============================================================================="""
 from drivers import Signals
 from drivers.DriverBase import DriverBase
-from exceptions.InvalidPositionException import InvalidPositionException
 import pifacedigitalio
 # rmv import atexit
 import logging
 
 logger = logging.getLogger(__name__)
 
-class PiFaceInterface(DriverBase):
+# Required for the board to function correctly.
+pifacedigitalio.core.init()
+
+class PiFaceDigital2Relays(DriverBase):
     def setup(self):
         super().setup()
         group_number = int(self.config.get('group_number', 0))
-        init_board = self.config.get('init_board', True)
+        init_board = self.config.get('init_board', False)
         self._relay = int(self.config.get('relay', group_number))
         # Turn off Interrupts
         # rmv? pifacedigitalio.core.deinit()
@@ -51,46 +56,31 @@ class PiFaceInterface(DriverBase):
         new_value = int(data)
         self._pifacedigital.relays[self._relay].value = new_value
         # fix? Publish that the target state has changed?
+        logger.info('relay set to = {}'.format(new_value))
     def shutdown(self):
         super().shutdown()
         # rmv? self._pifacedigital.deinit_board()
 
-    # rmv def reset_piface(self):
-    # rmv     self._pifacedigital.init_board()
+class PiFaceDigital2SimulateCurrentSensor(DriverBase):
+    _events_ = [Signals.CURRENT_FLOWING]
+    def setup(self):
+        super().setup()
+        group_number = int(self.config.get('group_number', 0))
+        init_board = self.config.get('init_board', False)
+        self._pushbutton = int(self.config.get('relay', 3-group_number))
+        self._current_flowing = False
+        self._pifacedigital = pifacedigitalio.PiFaceDigital(init_board=init_board)
+    def startup(self):
+        super().startup()
+        self._listener = pifacedigitalio.InputEventListener(chip=self._pifacedigital)
+        self._listener.register(3, pifacedigitalio.IODIR_FALLING_EDGE, self._button_clicked)
+        self._listener.activate()
+        self.open_for_business()
+    def _button_clicked(self, event):
+        self._current_flowing = not self._current_flowing
+        self.publish(Signals.CURRENT_FLOWING, self._current_flowing)
+        logger.info('published current flowing = {}'.format(self._current_flowing))
+    def shutdown(self):
+        self._listener.deactivate()
+        super().shutdown()
 
-    def relay(self, position, value):
-        position = int(position)
-
-        if position >= 1 and position <= 2:
-            self.output(position, value)
-            return
-
-        raise InvalidPositionException(
-            "Pyface has no relay position " + str(position))
-
-    def input(self, position):
-        position = int(position)
-
-        if position >= 1 and position <= 8:
-            return self._pifacedigital.input_pins[position-1].value
-
-        raise InvalidPositionException(
-            "PiFace has no input position " + str(position))
-
-    def output(self, position, value):
-        position = int(position)
-
-        if value:
-            value = 1
-        else:
-            value = 0
-
-        if position >= 1 and position <= 8:
-            if value:
-                self._pifacedigital.output_pins[position-1].turn_on()
-            else:
-                self._pifacedigital.output_pins[position-1].turn_off()
-            return
-
-        raise InvalidPositionException(
-            "PiFace has no output position " + str(position))

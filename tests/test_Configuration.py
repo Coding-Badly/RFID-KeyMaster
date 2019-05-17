@@ -38,7 +38,8 @@ def raw_config_001():
     "groups": ["primary"],
     "primary": [
         {
-            "driver": "PiFaceInterface",
+            "driver": "PiFaceDigital2Relays",
+            "module": "PiFaceDigital2Interface",
             "init_board": false,
             "relay": 0
         },
