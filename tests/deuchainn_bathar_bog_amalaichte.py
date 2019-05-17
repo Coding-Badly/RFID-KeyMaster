@@ -68,9 +68,33 @@ def raw_config_001():
 }
 """)
 
-def test_001(caplog, raw_config_001):
+@pytest.fixture(scope="module")
+def raw_config_002():
+    return json.loads("""{
+    "general": {
+        "description": "Simulate Current Sensor",
+        "revision": 1
+    },
+    "root": [
+        {
+            "driver": "BlackTagBringsDeathOfRats"
+        }
+    ],
+    "groups": ["primary"],
+    "primary": [
+        {
+            "driver": "SycreaderUSB125"
+        },
+        {
+            "driver": "PiFaceDigital2SimulateCurrentSensor"
+        }
+    ]
+}
+""")
+
+def test_001(caplog, raw_config_001, raw_config_002):
     caplog.set_level(logging.INFO)
-    tm1 = LoadableDriverBuilder(Configuration(raw_config_001))
+    tm1 = LoadableDriverBuilder(Configuration(raw_config_002))
     root = tm1.build()
     root.setup()
     root.start()

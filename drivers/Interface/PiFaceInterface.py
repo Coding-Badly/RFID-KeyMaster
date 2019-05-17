@@ -38,7 +38,7 @@ class PiFaceInterface(DriverBase):
         init_board = self.config.get('init_board', True)
         self._relay = int(self.config.get('relay', group_number))
         # Turn off Interrupts
-        pifacedigitalio.core.deinit()
+        # rmv? pifacedigitalio.core.deinit()
         self._pifacedigital = pifacedigitalio.PiFaceDigital(init_board=init_board)
         self.subscribe(None, Signals.CONTROL_TARGET, self.receive_control_target)
         # rmv atexit.register(self.reset_piface)
@@ -49,9 +49,11 @@ class PiFaceInterface(DriverBase):
         self.open_for_business()
     def receive_control_target(self, data):
         new_value = int(data)
-        logger.info('tock {}'.format(new_value))
         self._pifacedigital.relays[self._relay].value = new_value
         # fix? Publish that the target state has changed?
+    def shutdown(self):
+        super().shutdown()
+        # rmv? self._pifacedigital.deinit_board()
 
     # rmv def reset_piface(self):
     # rmv     self._pifacedigital.init_board()
