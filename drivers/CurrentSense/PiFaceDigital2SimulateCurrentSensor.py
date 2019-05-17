@@ -42,7 +42,6 @@ class PiFaceDigital2SimulateCurrentSensor(DriverBase):
         self._listener = pifacedigitalio.InputEventListener(chip=self._pifacedigital)
         self._listener.register(3, pifacedigitalio.IODIR_FALLING_EDGE, self._button_clicked)
         self._listener.activate()
-        logger.info('{} open for business'.format(self.name))
         self.open_for_business()
     def _button_clicked(self, event):
         self._current_flowing = not self._current_flowing
