@@ -1,0 +1,20 @@
+
+# sudo cp /home/pi/dms/init_PiFace_Digital_2.service /etc/systemd/system/init_PiFace_Digital_2.service
+# sudo systemctl enable init_PiFace_Digital_2.service
+# sudo systemctl disable init_PiFace_Digital_2.service
+
+[Unit]
+Description=Initialize PiFace Digital 2 Board
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 -u init_PiFace_Digital_2.py
+WorkingDirectory=/home/pi/dms
+StandardOutput=inherit
+StandardError=inherit
+#User=pi
+User=root
+
+[Install]
+WantedBy=multi-user.target
+
