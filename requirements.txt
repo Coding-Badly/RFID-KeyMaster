@@ -4,3 +4,4 @@ python-dispatch
 pywin32; platform_system == "Windows"
 PyYAML
 pyzipper
+requests
