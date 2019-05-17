@@ -68,25 +68,32 @@ class MemberDataFreshener(DriverBase):
             user = value['user']
             user['groups'] = frozenset(user['groups'])
         return data
+    def _log_exception(self, exc, description):
+        s1 = str(exc)
+        if s1 != self._previous_exception:
+            logger.exception(description)
+            self._previous_exception = s1
     def poll_for_fresh_data(self):
-        with self._session as s:
-          response = s.get(self._remote_cache_url, headers=self._request_headers)  # fix: verify=False
-        if response.status_code == requests.codes.ok:
-            try:
-                data = response.json()
-                #self.convert_json_to_internal(data)
-                self.publish(Signals.FRESH_DATA, data)
-                logger.info('Fresh member data published.')
-                etag = fix_etag(response.headers)
-                logger.info('etag = %s.', etag)
-                self._request_headers['If-None-Match'] = etag
-            except json.decoder.JSONDecodeError as exc:
-                logger.exception('Unable to parse member data.')
-        elif response.status_code == requests.codes.not_modified:
-            logger.info('Member data has not changed since the last publication.')
-            pass
-        else:
-            response.raise_for_status()
+        try:
+            with self._session as s:
+              response = s.get(self._remote_cache_url, headers=self._request_headers)  # fix: verify=False
+            if response.status_code == requests.codes.ok:
+                try:
+                    data = response.json()
+                    #self.convert_json_to_internal(data)
+                    self.publish(Signals.FRESH_DATA, data)
+                    logger.info('Fresh member data published.')
+                    etag = fix_etag(response.headers)
+                    logger.info('etag = %s.', etag)
+                    self._request_headers['If-None-Match'] = etag
+                except json.decoder.JSONDecodeError as exc:
+                    self._log_exception(exc, 'Unable to parse member data.')
+            elif response.status_code == requests.codes.not_modified:
+                logger.info('Member data has not changed since the last publication.')
+            else:
+                response.raise_for_status()
+        except requests.exceptions.RequestException as exc:
+            self._log_exception(exc, 'Unable to get fresh data.')
     def setup(self):
         super().setup()
         logger.info('MemberDataFreshener.setup...')
@@ -94,6 +101,7 @@ class MemberDataFreshener(DriverBase):
         self._poll_rate = float(self.config.get('poll_rate', 60.0))
         self._request_headers = {}
         self._session = requests.Session()
+        self._previous_exception = None
         logger.info('MemberDataFreshener.setup fini.')
     def startup(self):
         super().startup()
