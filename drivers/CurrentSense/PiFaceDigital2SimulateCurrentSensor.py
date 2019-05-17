@@ -29,22 +29,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+pifacedigitalio.core.init()
+
 class PiFaceDigital2SimulateCurrentSensor(DriverBase):
     _events_ = [Signals.CURRENT_FLOWING]
     def setup(self):
         super().setup()
         self._current_flowing = False
         self._pifacedigital = pifacedigitalio.PiFaceDigital(init_board=False)
-        self._listener = self._pifacedigitalio.InputEventListener(chip=self._pifacedigital)
     def startup(self):
         super().startup()
+        self._listener = pifacedigitalio.InputEventListener(chip=self._pifacedigital)
         self._listener.register(3, pifacedigitalio.IODIR_FALLING_EDGE, self._button_clicked)
+        self._listener.activate()
+        logger.info('{} open for business'.format(self.name))
         self.open_for_business()
     def _button_clicked(self, event):
         self._current_flowing = not self._current_flowing
         self.publish(Signals.CURRENT_FLOWING, self._current_flowing)
         logger.info('published current flowing = {}'.format(self._current_flowing))
     def shutdown(self):
-        self._listener.activate()
+        self._listener.deactivate()
         super().shutdown()
 
