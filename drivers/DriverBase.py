@@ -489,6 +489,7 @@ class DriverBase(Thread, Dispatcher):
         return DriverQueue()
 
     def open_for_business(self):
+        logger.info('{} open for business'.format(self.name))
         self._open_for_business.set()
 
     def start_and_wait(self):
