@@ -52,6 +52,10 @@ def raw_config_001():
             "driver": "SycreaderUSB125"
         },
         {
+            "driver": "PiFaceDigital2SimulateCurrentSensor",
+            "module": "PiFaceDigital2Interface"
+        },
+        {
             "driver": "Authenticator"
         },
         {

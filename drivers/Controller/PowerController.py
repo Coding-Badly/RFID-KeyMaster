@@ -38,6 +38,8 @@ class PowerController(DriverBase):
         self._target_state = None
         self.subscribe(None, Signals.USER_AUTHORIZED, self.receive_user_authorized)
         self.subscribe(None, Signals.USER_LOGIN_FAILED, self.receive_user_login_failed)
+        self.subscribe(None, Signals.CURRENT_FLOWING, self.receive_current_flowing)
+        self.subscribe(None, Signals.TARGET_ENGAGED, self.receive_target_engaged, determines_start_order=False)
     def startup(self):
         super().startup()
         self.open_for_business()
@@ -62,4 +64,8 @@ class PowerController(DriverBase):
         # Issue a warning if current is flowing?
         self._current_user = None
         self._control_target(False)
+    def receive_current_flowing(self, current_flowing)
+        logger.info('receive_current_flowing / current_flowing = {}'.format(current_flowing))
+    def receive_target_engaged(self, target_engaged):
+        logger.info('receive_target_engaged / target_engaged = {}'.format(target_engaged))
 

@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 #pifacedigitalio.core.init()
 
 class PiFaceDigital2Relays(DriverBase):
+    _events_ = [Signals.TARGET_ENGAGED]
     def setup(self):
         super().setup()
         group_number = int(self.config.get('group_number', 0))
@@ -54,7 +55,7 @@ class PiFaceDigital2Relays(DriverBase):
         #return False
     def startup(self):
         super().startup()
-        # fix? Publish the initial state of the target?
+        self.publish(Signals.TARGET_ENGAGED, self._pifacedigital.relays[self._relay].value)
         self.open_for_business()
     def receive_control_target(self, data):
         new_value = int(data)

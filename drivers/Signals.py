@@ -25,6 +25,7 @@
 
 STOP_NOW                    = 'stop_now'
 CONTROL_TARGET              = 'control_target'
+TARGET_ENGAGED              = 'target_engaged'
 SWIPE_10                    = 'swipe_10'
 FRESH_DATA                  = 'fresh_member_data'
 CACHED_DATA                 = 'cached_member_data'
