@@ -26,6 +26,8 @@ import json
 import logging
 import pytest
 
+#-----------------------------------------------------------------------------#
+
 @pytest.fixture(scope="module")
 def raw_config_001():
     return json.loads("""{
@@ -73,6 +75,8 @@ def raw_config_001():
 }
 """)
 
+#-----------------------------------------------------------------------------#
+
 @pytest.fixture(scope="module")
 def raw_config_002():
     return json.loads("""{
@@ -98,11 +102,47 @@ def raw_config_002():
 }
 """)
 
-def test_001(caplog, raw_config_001, raw_config_002):
+#-----------------------------------------------------------------------------#
+
+@pytest.fixture(scope="module")
+def raw_config_002():
+    return json.loads("""{
+    "general": {
+        "description": "Hardware Startup Check",
+        "revision": 1
+    },
+    "root": [
+        {
+            "driver": "BlackTagBringsDeathOfRats"
+        }
+    ],
+    "groups": ["primary"],
+    "primary": [
+        {
+            "driver": "SycreaderUSB125"
+        },
+        {
+            "driver": "PiFaceDigital2Relays",
+            "module": "PiFaceDigital2Interface"
+        },
+        {
+            "driver": "HardwareStartupCheck"
+        }
+    ]
+}
+""")
+
+#-----------------------------------------------------------------------------#
+
+def test_001(caplog, raw_config_001, raw_config_002, raw_config_003):
     caplog.set_level(logging.INFO)
-    tm1 = LoadableDriverBuilder(Configuration(raw_config_002))
+    tm1 = LoadableDriverBuilder(Configuration(raw_config_003))
     root = tm1.build()
     root.setup()
     root.start()
     root.join()
     root.teardown()
+
+#-----------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------#
