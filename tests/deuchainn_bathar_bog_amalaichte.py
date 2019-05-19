@@ -24,7 +24,11 @@ from utils.Configuration import Configuration
 from utils.LoadableDriverBuilder import LoadableDriverBuilder
 import json
 import logging
+import pifacedigitalio
 import pytest
+import readline
+
+logger = logging.getLogger(__name__)
 
 #-----------------------------------------------------------------------------#
 
@@ -104,29 +108,30 @@ def raw_config_002():
 
 #-----------------------------------------------------------------------------#
 
-@pytest.fixture(scope="module")
-def raw_config_002():
+@pytest.fixture
+def raw_config_003():
     return json.loads("""{
     "general": {
         "description": "Hardware Startup Check",
         "revision": 1
     },
-    "root": [
-        {
-            "driver": "BlackTagBringsDeathOfRats"
-        }
-    ],
     "groups": ["primary"],
     "primary": [
         {
             "driver": "SycreaderUSB125"
         },
         {
-            "driver": "PiFaceDigital2Relays",
+            "driver": "PiFaceDigital2SimulateCurrentSensor",
             "module": "PiFaceDigital2Interface"
         },
         {
-            "driver": "HardwareStartupCheck"
+            "driver": "HardwareStartupCheck",
+            "expected_current_was_flowing": false,
+            "expected_target_was_engaged": false
+        },
+        {
+            "driver": "PiFaceDigital2Relays",
+            "module": "PiFaceDigital2Interface"
         }
     ]
 }
@@ -134,14 +139,46 @@ def raw_config_002():
 
 #-----------------------------------------------------------------------------#
 
-def test_001(caplog, raw_config_001, raw_config_002, raw_config_003):
-    caplog.set_level(logging.INFO)
-    tm1 = LoadableDriverBuilder(Configuration(raw_config_003))
+def pause_test(pytestconfig, text):
+    capmanager = pytestconfig.pluginmanager.getplugin('capturemanager')
+    capmanager.suspend_global_capture(in_=True)
+    j1 = input(text)
+    capmanager.resume_global_capture()
+
+def run_one(pytestconfig, raw_config, expected_current_was_flowing, expected_target_was_engaged):
+    if expected_current_was_flowing:
+        pause_test(pytestconfig, "Hold S3 then press Enter...")
+    else:
+        pause_test(pytestconfig, "Release S3 then press Enter...")
+    _pifacedigital = pifacedigitalio.PiFaceDigital(init_board=False)
+    _pifacedigital.relays[0].value = expected_target_was_engaged
+    try:
+        tm1 = LoadableDriverBuilder(Configuration(raw_config))
+        raw_config['primary'][2]['expected_current_was_flowing'] = expected_current_was_flowing
+        raw_config['primary'][2]['expected_target_was_engaged'] = expected_target_was_engaged
     root = tm1.build()
     root.setup()
     root.start()
     root.join()
     root.teardown()
+    finally:
+        _pifacedigital.relays[0].value = False
+
+def test_001(caplog, pytestconfig, raw_config_003):
+    caplog.set_level(logging.INFO)
+    run_one(pytestconfig, raw_config_003, False, False)
+
+def test_002(caplog, pytestconfig, raw_config_003):
+    caplog.set_level(logging.INFO)
+    run_one(pytestconfig, raw_config_003, False, True)
+
+def test_003(caplog, pytestconfig, raw_config_003):
+    caplog.set_level(logging.INFO)
+    run_one(pytestconfig, raw_config_003, True, False)
+
+def test_004(caplog, pytestconfig, raw_config_003):
+    caplog.set_level(logging.INFO)
+    run_one(pytestconfig, raw_config_003, True, True)
 
 #-----------------------------------------------------------------------------#
 #-----------------------------------------------------------------------------#
