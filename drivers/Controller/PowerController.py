@@ -36,13 +36,26 @@ class PowerController(DriverBase):
         self._power_permission = Permission('power')
         self._current_user = None
         self._target_state = None
-        self.subscribe(None, Signals.USER_AUTHORIZED, self.receive_user_authorized)
-        self.subscribe(None, Signals.USER_LOGIN_FAILED, self.receive_user_login_failed)
-        self.subscribe(None, Signals.CURRENT_FLOWING, self.receive_current_flowing)
+        self._state = self._state_init_0
+        # fix self.subscribe(None, Signals.USER_AUTHORIZED, self.receive_user_authorized)
+        # fix self.subscribe(None, Signals.USER_LOGIN_FAILED, self.receive_user_login_failed)
+        self.subscribe(None, Signals.CURRENT_FLOWING, self._receive_current_flowing)
         self.subscribe(None, Signals.TARGET_ENGAGED, self.receive_target_engaged, determines_start_order=False)
     def startup(self):
         super().startup()
         self.open_for_business()
+    def _state_init_0(self, signal, *args, **kwargs):
+        if signal == Signals.CURRENT_FLOWING:
+            if args[0]:
+                self._state = self._state_init_0_have_current
+            else:
+                self._state = self._state_init_0_no_current
+        else:
+            logger.warning('Unhandled signal in {}: {}, {}, {}'.format(self._state, signal, args, kwargs))
+    def _state_init_0_have_current(self, signal, *args, **kwargs):
+        logger.warning('Unhandled signal in {}: {}, {}, {}'.format(self._state, signal, args, kwargs))
+    def _state_init_0_no_current(self, signal, *args, **kwargs):
+        logger.warning('Unhandled signal in {}: {}, {}, {}'.format(self._state, signal, args, kwargs))
     def _control_target(self, new_state):
         new_value = 1 if new_state else 0
         self.publish(Signals.CONTROL_TARGET, new_value)
@@ -64,8 +77,10 @@ class PowerController(DriverBase):
         # Issue a warning if current is flowing?
         self._current_user = None
         self._control_target(False)
-    def receive_current_flowing(self, current_flowing)
-        logger.info('receive_current_flowing / current_flowing = {}'.format(current_flowing))
+    def _receive_current_flowing(self, *args, **kwargs)
+        logger.info('receive_current_flowing / current_flowing = {}'.format(args[0]))
+        self._state(Signals.CURRENT_FLOWING, *args, **kwargs)
     def receive_target_engaged(self, target_engaged):
         logger.info('receive_target_engaged / target_engaged = {}'.format(target_engaged))
+        # fix self._state(Signals.TARGET_ENGAGED, target_engaged)
 
