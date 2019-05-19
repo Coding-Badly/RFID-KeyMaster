@@ -79,6 +79,15 @@ def raw_config_001():
 }
 """)
 
+def test_001_001(caplog, raw_config_001):
+    caplog.set_level(logging.INFO)
+    tm1 = LoadableDriverBuilder(Configuration(raw_config_001))
+    root = tm1.build()
+    root.setup()
+    root.start()
+    root.join()
+    root.teardown()
+
 #-----------------------------------------------------------------------------#
 
 @pytest.fixture(scope="module")
@@ -156,27 +165,27 @@ def run_one(pytestconfig, raw_config, expected_current_was_flowing, expected_tar
         tm1 = LoadableDriverBuilder(Configuration(raw_config))
         raw_config['primary'][2]['expected_current_was_flowing'] = expected_current_was_flowing
         raw_config['primary'][2]['expected_target_was_engaged'] = expected_target_was_engaged
-    root = tm1.build()
-    root.setup()
-    root.start()
-    root.join()
-    root.teardown()
+        root = tm1.build()
+        root.setup()
+        root.start()
+        root.join()
+        root.teardown()
     finally:
         _pifacedigital.relays[0].value = False
 
-def test_001(caplog, pytestconfig, raw_config_003):
+def x_test_003_001(caplog, pytestconfig, raw_config_003):
     caplog.set_level(logging.INFO)
     run_one(pytestconfig, raw_config_003, False, False)
 
-def test_002(caplog, pytestconfig, raw_config_003):
+def x_test_003_002(caplog, pytestconfig, raw_config_003):
     caplog.set_level(logging.INFO)
     run_one(pytestconfig, raw_config_003, False, True)
 
-def test_003(caplog, pytestconfig, raw_config_003):
+def x_test_003_003(caplog, pytestconfig, raw_config_003):
     caplog.set_level(logging.INFO)
     run_one(pytestconfig, raw_config_003, True, False)
 
-def test_004(caplog, pytestconfig, raw_config_003):
+def x_test_003_004(caplog, pytestconfig, raw_config_003):
     caplog.set_level(logging.INFO)
     run_one(pytestconfig, raw_config_003, True, True)
 
