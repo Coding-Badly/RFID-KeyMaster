@@ -24,6 +24,11 @@ class QEvent():
     def __init__(self, signal):
         self.signal = signal
 
+EVENT_EMPTY = QEvent(Q_EMPTY_SIG)
+EVENT_INIT  = QEvent(Q_INIT_SIG)
+EVENT_ENTRY = QEvent(Q_ENTRY_SIG)
+EVENT_EXIT  = QEvent(Q_EXIT_SIG)
+
 class QHsm():
     def __init__(self, initial_state):
         self._waiting_signals = deque()
@@ -34,7 +39,13 @@ class QHsm():
         assert self._same_states(self._state, self.top) and (self._source is not None)
         S := self._state
         self._source(event)
-        P := GetSuperState(self._state)
+        P := self.get_super_state(self._state)
+		assert self._same_states(S, P)
+		S := self._state
+		S(EVENT_ENTRY)
+		while True:
+			pass
+		# here
     def process(self, signal_or_event):
         event = self._wrap_it(signal_or_event)
         rv = False
@@ -70,12 +81,6 @@ class QHsm():
             return None
     def _post_signal(self, signal_or_event):
         self._waiting_signals.append(self._wrap_it(signal_or_event))
-    @staticmethod
-    def _wrap_it(signal_or_event):
-        if not isinstance(signal_or_event, QEvent):
-            return QEvent(signal_or_event)
-        else:
-            return signal_or_event
     def _reset(self):
         assert self._first_run or self._finished
         self._first_run = True
@@ -85,8 +90,17 @@ class QHsm():
         self._waiting_signals.clear()
         self._event_handled = None
     @staticmethod
+	def get_super_state(s1):
+		return s1(EVENT_EMPTY)
+    @staticmethod
     def _same_states(s1, s2):
         return s1 == s2
+    @staticmethod
+    def _wrap_it(signal_or_event):
+        if not isinstance(signal_or_event, QEvent):
+            return QEvent(signal_or_event)
+        else:
+            return signal_or_event
 
 class TcpActiveStation(QHsm):
     def __init__(self):
