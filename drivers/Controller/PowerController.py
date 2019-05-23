@@ -77,7 +77,7 @@ class PowerController(DriverBase):
         # Issue a warning if current is flowing?
         self._current_user = None
         self._control_target(False)
-    def _receive_current_flowing(self, *args, **kwargs)
+    def _receive_current_flowing(self, *args, **kwargs):
         logger.info('receive_current_flowing / current_flowing = {}'.format(args[0]))
         self._state(Signals.CURRENT_FLOWING, *args, **kwargs)
     def receive_target_engaged(self, target_engaged):

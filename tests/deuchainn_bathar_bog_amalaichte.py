@@ -49,7 +49,7 @@ def raw_config_001():
         {
             "driver": "MemberDataFreshener",
             "remote_cache_url": "https://www.rowdydogsoftware.com/TKRn2uZNBSCSBcTUPRFPhHBL/adcache.json",
-            "poll_rate": 2.5
+            "poll_rate": 60.0
         },
         {
             "driver": "MemberDataCacher"
