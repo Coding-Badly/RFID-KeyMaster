@@ -25,7 +25,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.DriverBase import DriverBase
 import gzip
 import json
@@ -84,14 +84,14 @@ class MemberDataCacheFileAsPickleGzip(MemberDataCacheFile):
         return data
 
 class MemberDataCacher(DriverBase):
-    _events_ = [Signals.CACHED_DATA]
+    _events_ = [KeyMasterSignals.CACHED_DATA]
     def _after_init(self):
         super()._after_init()
         # rmv? self._file_manager = MemberDataCacheFileAsJson()
         self._file_manager = MemberDataCacheFileAsPickleGzip()
     def setup(self):
         super().setup()
-        self.subscribe(None, Signals.FRESH_DATA, self.receive_fresh_data)
+        self.subscribe(None, KeyMasterSignals.FRESH_DATA, self.receive_fresh_data)
     def startup(self):
         super().startup()
         self.open_for_business()
@@ -99,7 +99,7 @@ class MemberDataCacher(DriverBase):
         while keep_trying:
             keep_trying = False
             try:
-                self.publish(Signals.CACHED_DATA, self._file_manager.load())
+                self.publish(KeyMasterSignals.CACHED_DATA, self._file_manager.load())
                 logger.info('Cached member data published.')
             except FileNotFoundError:
                 logger.warning('Cached member data not available.')

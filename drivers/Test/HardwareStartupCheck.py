@@ -25,14 +25,14 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.DriverBase import DriverBase
 import logging
 
 logger = logging.getLogger(__name__)
 
 class HardwareStartupCheck(DriverBase):
-    _events_ = [Signals.CONTROL_TARGET]
+    _events_ = [KeyMasterSignals.CONTROL_TARGET]
     def _after_init(self):
         super()._after_init()
         self.current_was_flowing = None
@@ -41,8 +41,8 @@ class HardwareStartupCheck(DriverBase):
         super().setup()
         self.expected_current_was_flowing = self.config.get('expected_current_was_flowing', None)
         self.expected_target_was_engaged = self.config.get('expected_target_was_engaged', None)
-        self.subscribe(None, Signals.CURRENT_FLOWING, self._receive_current_flowing)
-        self.subscribe(None, Signals.TARGET_ENGAGED, self._receive_target_engaged, determines_start_order=False)
+        self.subscribe(None, KeyMasterSignals.CURRENT_FLOWING, self._receive_current_flowing)
+        self.subscribe(None, KeyMasterSignals.TARGET_ENGAGED, self._receive_target_engaged, determines_start_order=False)
     def startup(self):
         super().startup()
         self.call_after(0.10, self._finished)

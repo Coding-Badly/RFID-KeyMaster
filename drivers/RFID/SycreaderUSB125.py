@@ -22,7 +22,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.DriverBase import DriverQueuePlusSelect, DriverBase
 from enum import Enum
 import evdev
@@ -113,7 +113,7 @@ class SycreaderParser():
         return self._timestamp
 
 class SycreaderUSB125(DriverBase):
-    _events_ = [Signals.SWIPE_10]
+    _events_ = [KeyMasterSignals.SWIPE_10]
     def _create_event_queue(self):
         return DriverQueuePlusSelect()
     def setup(self):
@@ -139,7 +139,7 @@ class SycreaderUSB125(DriverBase):
                     # malfeasance.  Throttling here reduces the load on
                     # the rest of the system but makes the software less
                     # versatile.
-                    self.publish(Signals.SWIPE_10, self._parser.timestamp, self._parser.rfid)
+                    self.publish(KeyMasterSignals.SWIPE_10, self._parser.timestamp, self._parser.rfid)
                 # ParserStatus.ERROR
     def teardown(self):
         super().teardown()

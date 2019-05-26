@@ -25,7 +25,7 @@ import pytest
 if platform.system() == 'Windows':
     pytest.skip("skipping tests that will not run on Windows", allow_module_level=True)
 
-from drivers import Signals
+from drivers.Signals import Signals, KeyMasterSignals
 from drivers.DriverBase import DriverBase, DriverGroup
 from drivers.RFID.SycreaderUSB125 import SycreaderUSB125
 from drivers.RFID.SycreaderUSB125 import find_an_saor_rfid_readers
@@ -61,11 +61,11 @@ class SimplePrintTagController(DriverBase):
         self._tags['0006276739'] = NormalTag('Red')
         self._tags['0016182332'] = StopTag('Yellow')
         self._reader = int(self.config.get('reader', 0))
-        self.subscribe(None, Signals.SWIPE_10, self.receive_swipe_10, determines_start_order=False)
+        self.subscribe(None, KeyMasterSignals.SWIPE_10, self.receive_swipe_10, determines_start_order=False)
     def startup(self):
         super().startup()
         self.open_for_business()
-    # self.publish(Signals.SWIPE_10, self._parser.timestamp, self._parser.rfid)
+    # self.publish(KeyMasterSignals.SWIPE_10, self._parser.timestamp, self._parser.rfid)
     def receive_swipe_10(self, timestamp, rfid):
         tag = self._tags.get(rfid, self._no_tag)
         logger.info('#{}: {} {} {} - {}'.format(self._reader, timestamp, rfid, tag._color, tag.action(self)))

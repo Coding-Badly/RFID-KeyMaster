@@ -20,7 +20,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.DriverBase import DriverBase
 from utils.SecurityContext import SecurityContext
 import logging
@@ -28,7 +28,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Authorizer(DriverBase):
-    _events_ = [Signals.USER_AUTHORIZED]
+    _events_ = [KeyMasterSignals.USER_AUTHORIZED]
     def setup(self):
         super().setup()
         self._context = SecurityContext(
@@ -39,7 +39,7 @@ class Authorizer(DriverBase):
         groups = self.config.get('groups', None)
         if groups:
             self._context.add_groups(groups)
-        self.subscribe(None, Signals.USER_LOGGED_IN, self.receive_user_logged_in)
+        self.subscribe(None, KeyMasterSignals.USER_LOGGED_IN, self.receive_user_logged_in)
     def startup(self):
         super().startup()
         self.open_for_business()
@@ -48,4 +48,4 @@ class Authorizer(DriverBase):
         effective_rights = self._context.get_effective_rights(data.groups)
         data.effective_rights = effective_rights
         data.authorized = len(effective_rights) > 0
-        self.publish(Signals.USER_AUTHORIZED, data)
+        self.publish(KeyMasterSignals.USER_AUTHORIZED, data)

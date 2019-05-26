@@ -21,7 +21,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.DriverBase import DriverBase
 import logging
 
@@ -63,14 +63,14 @@ class AuthenticatorData():
         return self._groups
 
 class Authenticator(DriverBase):
-    _events_ = [Signals.USER_LOGGED_IN, Signals.USER_LOGIN_FAILED]
+    _events_ = [KeyMasterSignals.USER_LOGGED_IN, KeyMasterSignals.USER_LOGIN_FAILED]
     def setup(self):
         super().setup()
         self._have_fresh_data = False
         self._member_data = dict()
-        self.subscribe(None, Signals.CACHED_DATA, self.receive_cached_data)
-        self.subscribe(None, Signals.FRESH_DATA, self.receive_fresh_data)
-        self.subscribe(None, Signals.SWIPE_10, self.receive_swipe_10)
+        self.subscribe(None, KeyMasterSignals.CACHED_DATA, self.receive_cached_data)
+        self.subscribe(None, KeyMasterSignals.FRESH_DATA, self.receive_fresh_data)
+        self.subscribe(None, KeyMasterSignals.SWIPE_10, self.receive_swipe_10)
     def startup(self):
         super().startup()
         self.open_for_business()
@@ -85,7 +85,7 @@ class Authenticator(DriverBase):
         t1 = AuthenticatorData(rfid)
         if member_data:
             t1.from_member_data(member_data)
-            self.publish(Signals.USER_LOGGED_IN, t1)
+            self.publish(KeyMasterSignals.USER_LOGGED_IN, t1)
         else:
             # fix? Should MemberDataFreshener check for fresh data when a login failure occurs?
-            self.publish(Signals.USER_LOGIN_FAILED, t1)
+            self.publish(KeyMasterSignals.USER_LOGIN_FAILED, t1)

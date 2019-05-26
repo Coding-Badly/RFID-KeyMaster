@@ -25,7 +25,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.DriverBase import DriverBase
 import pifacedigitalio
 # rmv import atexit
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 #pifacedigitalio.core.init()
 
 class PiFaceDigital2Relays(DriverBase):
-    _events_ = [Signals.TARGET_ENGAGED]
+    _events_ = [KeyMasterSignals.TARGET_ENGAGED]
     def setup(self):
         super().setup()
         group_number = int(self.config.get('group_number', 0))
@@ -50,11 +50,11 @@ class PiFaceDigital2Relays(DriverBase):
         # Turn off Interrupts
         # rmv? pifacedigitalio.core.deinit()
         self._pifacedigital = pifacedigitalio.PiFaceDigital(init_board=init_board)
-        self.subscribe(None, Signals.CONTROL_TARGET, self._receive_control_target)
+        self.subscribe(None, KeyMasterSignals.CONTROL_TARGET, self._receive_control_target)
         # rmv atexit.register(self.reset_piface)
         #return False
     def _publish_target_state(self):
-        self.publish(Signals.TARGET_ENGAGED, bool(self._pifacedigital.relays[self._relay].value))
+        self.publish(KeyMasterSignals.TARGET_ENGAGED, bool(self._pifacedigital.relays[self._relay].value))
     def startup(self):
         super().startup()
         self._publish_target_state()
@@ -69,7 +69,7 @@ class PiFaceDigital2Relays(DriverBase):
         # rmv? self._pifacedigital.deinit_board()
 
 class PiFaceDigital2SimulateCurrentSensor(DriverBase):
-    _events_ = [Signals.CURRENT_FLOWING]
+    _events_ = [KeyMasterSignals.CURRENT_FLOWING]
     def setup(self):
         super().setup()
         group_number = int(self.config.get('group_number', 0))
@@ -88,7 +88,7 @@ class PiFaceDigital2SimulateCurrentSensor(DriverBase):
         self._publish_current_flowing(not self._current_flowing)
     def _publish_current_flowing(self, new_value):
         self._current_flowing = new_value
-        self.publish(Signals.CURRENT_FLOWING, self._current_flowing)
+        self.publish(KeyMasterSignals.CURRENT_FLOWING, self._current_flowing)
         logger.info('published current flowing = {}'.format(self._current_flowing))
     def shutdown(self):
         self._listener.deactivate()

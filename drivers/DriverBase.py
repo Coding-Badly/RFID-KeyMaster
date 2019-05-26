@@ -26,7 +26,8 @@
 
 ============================================================================="""
 from collections import defaultdict, OrderedDict
-from drivers import Signals
+# rmv from drivers import Signals
+from drivers.Signals import Signals
 from threading import Thread, Event
 from exceptions import DriverWontStartError, LeftOverEdgesError
 from exceptions.RequiredDriverException import RequiredDriverException
@@ -278,8 +279,7 @@ class DriverThunk():
         super().__init__()
         self._id = id
         self._event_queue = event_queue
-        dispatcher_arg = { event_name: self.thunk }
-        dispatcher.bind(**dispatcher_arg)
+        dispatcher.bind1(event_name, self.thunk)
     def thunk(self, *args, **kwargs):
         event = DriverEvent(self._id, args, kwargs)
         self._event_queue.put(event)

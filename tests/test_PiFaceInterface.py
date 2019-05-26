@@ -26,7 +26,7 @@ if platform.system() == 'Windows':
     pytest.skip("skipping tests that will not run on Windows", allow_module_level=True)
 
 from drivers.DriverBase import DriverGroup, DriverBase, DeathOfRats
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.Interface.PiFaceDigital2Interface import PiFaceDigital2Relays
 from drivers.Test.RunForSeconds import RunForSeconds
 import logging
@@ -34,7 +34,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class SimpleToggleController(DriverBase):
-    _events_ = [Signals.CONTROL_TARGET]
+    _events_ = [KeyMasterSignals.CONTROL_TARGET]
     def startup(self):
         super().startup()
         self._state = 0
@@ -43,7 +43,7 @@ class SimpleToggleController(DriverBase):
     def toggle_target(self):
         self._state ^= 1
         logger.info('tick {}'.format(self._state))
-        self.publish(Signals.CONTROL_TARGET, self._state)
+        self.publish(KeyMasterSignals.CONTROL_TARGET, self._state)
 
 def run_toggle_relay(which, number):
     config = {"driver": "PiFaceDigital2Relays", "init_board": True}

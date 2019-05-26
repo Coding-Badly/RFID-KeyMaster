@@ -22,7 +22,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.DriverBase import DriverBase
 from utils.SecurityContext import Permission
 import logging
@@ -30,22 +30,22 @@ import logging
 logger = logging.getLogger(__name__)
 
 class PowerController(DriverBase):
-    _events_ = [Signals.CONTROL_TARGET]
+    _events_ = [KeyMasterSignals.CONTROL_TARGET]
     def setup(self):
         super().setup()
         self._power_permission = Permission('power')
         self._current_user = None
         self._target_state = None
         self._state = self._state_init_0
-        # fix self.subscribe(None, Signals.USER_AUTHORIZED, self.receive_user_authorized)
-        # fix self.subscribe(None, Signals.USER_LOGIN_FAILED, self.receive_user_login_failed)
-        self.subscribe(None, Signals.CURRENT_FLOWING, self._receive_current_flowing)
-        self.subscribe(None, Signals.TARGET_ENGAGED, self.receive_target_engaged, determines_start_order=False)
+        # fix self.subscribe(None, KeyMasterSignals.USER_AUTHORIZED, self.receive_user_authorized)
+        # fix self.subscribe(None, KeyMasterSignals.USER_LOGIN_FAILED, self.receive_user_login_failed)
+        self.subscribe(None, KeyMasterSignals.CURRENT_FLOWING, self._receive_current_flowing)
+        self.subscribe(None, KeyMasterSignals.TARGET_ENGAGED, self.receive_target_engaged, determines_start_order=False)
     def startup(self):
         super().startup()
         self.open_for_business()
     def _state_init_0(self, signal, *args, **kwargs):
-        if signal == Signals.CURRENT_FLOWING:
+        if signal == KeyMasterSignals.CURRENT_FLOWING:
             if args[0]:
                 self._state = self._state_init_0_have_current
             else:
@@ -58,7 +58,7 @@ class PowerController(DriverBase):
         logger.warning('Unhandled signal in {}: {}, {}, {}'.format(self._state, signal, args, kwargs))
     def _control_target(self, new_state):
         new_value = 1 if new_state else 0
-        self.publish(Signals.CONTROL_TARGET, new_value)
+        self.publish(KeyMasterSignals.CONTROL_TARGET, new_value)
         self._target_state = new_state
     def receive_user_authorized(self, data):
         if data.authorized and (self._power_permission in data.effective_rights):
@@ -79,8 +79,8 @@ class PowerController(DriverBase):
         self._control_target(False)
     def _receive_current_flowing(self, *args, **kwargs):
         logger.info('receive_current_flowing / current_flowing = {}'.format(args[0]))
-        self._state(Signals.CURRENT_FLOWING, *args, **kwargs)
+        self._state(KeyMasterSignals.CURRENT_FLOWING, *args, **kwargs)
     def receive_target_engaged(self, target_engaged):
         logger.info('receive_target_engaged / target_engaged = {}'.format(target_engaged))
-        # fix self._state(Signals.TARGET_ENGAGED, target_engaged)
+        # fix self._state(KeyMasterSignals.TARGET_ENGAGED, target_engaged)
 

@@ -22,15 +22,15 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.DriverBase import DriverBase
 
 class AutomaticLogout(DriverBase):
     def setup(self):
         super().setup()
-        self.subscribe(None, Signals.USER_LOGGED_IN, self.receive_user_logged_in)
-        self.subscribe(None, Signals.USER_LOGIN_FAILED, self.receive_user_login_failed)
-        self.subscribe(None, Signals.USER_AUTHORIZED, self.receive_user_authorized)
+        self.subscribe(None, KeyMasterSignals.USER_LOGGED_IN, self.receive_user_logged_in)
+        self.subscribe(None, KeyMasterSignals.USER_LOGIN_FAILED, self.receive_user_login_failed)
+        self.subscribe(None, KeyMasterSignals.USER_AUTHORIZED, self.receive_user_authorized)
     def startup(self):
         super().startup()
         self.open_for_business()

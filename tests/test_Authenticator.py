@@ -20,7 +20,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.Auth.Authenticator import Authenticator
 from drivers.DriverBase import DriverGroup, DriverBase
 from drivers.Test.RunForSeconds import RunForSeconds
@@ -30,12 +30,12 @@ from time import monotonic
 logger = logging.getLogger(__name__)
 
 class MemberDataAndSwipe10Stub(DriverBase):
-    _events_ = [Signals.CACHED_DATA, Signals.FRESH_DATA, Signals.SWIPE_10]
+    _events_ = [KeyMasterSignals.CACHED_DATA, KeyMasterSignals.FRESH_DATA, KeyMasterSignals.SWIPE_10]
     def setup(self):
         super().setup()
         self._death_of_rats = self.config.get('DeathOfRats', None)
-        self.subscribe(None, Signals.USER_LOGGED_IN, self.receive_user_logged_in, determines_start_order=False)
-        self.subscribe(None, Signals.USER_LOGIN_FAILED, self.receive_user_login_failed, determines_start_order=False)
+        self.subscribe(None, KeyMasterSignals.USER_LOGGED_IN, self.receive_user_logged_in, determines_start_order=False)
+        self.subscribe(None, KeyMasterSignals.USER_LOGIN_FAILED, self.receive_user_login_failed, determines_start_order=False)
     def startup(self):
         super().startup()
         self.open_for_business()
@@ -50,20 +50,20 @@ class MemberDataAndSwipe10Stub(DriverBase):
                     'fullName':'Elmer Fudd',
                     'groups':['Carries Shotgun', 'Hunts Wabbit'],
                     'username':'fudd'}}}
-        self.publish(Signals.CACHED_DATA, member_data)
+        self.publish(KeyMasterSignals.CACHED_DATA, member_data)
         self.call_after(0.10, self.publish_first_swipe10)
     def publish_first_swipe10(self):
         logger.info('SWIPE!')
-        self.publish(Signals.SWIPE_10, monotonic(), '0002864796')  # blue tag
+        self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0002864796')  # blue tag
     def receive_user_logged_in(self, authenticator_data):
         logger.info('OK:   %s', authenticator_data)
         if authenticator_data.rfid == '0002864796':  # blue tag
-            self.publish(Signals.SWIPE_10, monotonic(), '0000721130')  # Brian's tag
+            self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0000721130')  # Brian's tag
         elif authenticator_data.rfid == '0006276739':  # red tag
-            self.publish(Signals.SWIPE_10, monotonic(), '0008683072')  # purple tag
+            self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0008683072')  # purple tag
         elif authenticator_data.rfid == '0008683072':  # purple tag
-            self.publish(Signals.CACHED_DATA, {})
-            self.publish(Signals.SWIPE_10, monotonic(), '0004134263')  # black tag
+            self.publish(KeyMasterSignals.CACHED_DATA, {})
+            self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0004134263')  # black tag
         elif authenticator_data.rfid == '0004134263':  # black tag
             self.fini = True
             if self._death_of_rats:
@@ -71,12 +71,12 @@ class MemberDataAndSwipe10Stub(DriverBase):
     def receive_user_login_failed(self, authenticator_data):
         logger.info('FAIL: %s', authenticator_data)
         if authenticator_data.rfid == '0000721130':  # Brian's tag
-            self.publish(Signals.SWIPE_10, monotonic(), '0006276739')  # red tag
+            self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0006276739')  # red tag
         elif authenticator_data.rfid == '0008683072':  # purple tag
-            self.publish(Signals.FRESH_DATA, {})
-            self.publish(Signals.SWIPE_10, monotonic(), '0002864796')  # blue tag
+            self.publish(KeyMasterSignals.FRESH_DATA, {})
+            self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0002864796')  # blue tag
         elif authenticator_data.rfid == '0002864796':  # blue tag
-            self.publish(Signals.SWIPE_10, monotonic(), '0006276739')  # red tag
+            self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0006276739')  # red tag
         elif authenticator_data.rfid == '0006276739':  # red tag
             member_data = {
                 '0008683072':{  # purple tag
@@ -89,11 +89,11 @@ class MemberDataAndSwipe10Stub(DriverBase):
                         'fullName':'Porky Pig',
                         'groups':["That's all Folks!"],
                         'username':'El_Puerco'}}}
-            self.publish(Signals.FRESH_DATA, member_data)
-            self.publish(Signals.SWIPE_10, monotonic(), '0008683072')  # purple tag
+            self.publish(KeyMasterSignals.FRESH_DATA, member_data)
+            self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0008683072')  # purple tag
 
 def test_Authenticator(caplog):
-    #caplog.set_level(logging.INFO)
+    caplog.set_level(logging.INFO)
     root = DriverGroup('root')
     dor = root.add(RunForSeconds({'seconds':1.0}))
     aut = root.add(Authenticator(None))

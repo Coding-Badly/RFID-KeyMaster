@@ -21,14 +21,14 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.DriverBase import DriverBase, DeathOfRats
 
 class BlackTagBringsDeathOfRats(DeathOfRats):
     def setup(self):
         super().setup()
         self._black_tag = self.config.get('black_tag', '0004134263')
-        self.subscribe(None, Signals.SWIPE_10, self.receive_swipe_10, determines_start_order=False)
+        self.subscribe(None, KeyMasterSignals.SWIPE_10, self.receive_swipe_10, determines_start_order=False)
     def receive_swipe_10(self, timestamp, rfid):
         if rfid == self._black_tag:
             self._stop_now()

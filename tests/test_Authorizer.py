@@ -20,7 +20,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers import Signals
+from drivers.Signals import KeyMasterSignals
 from drivers.Auth.Authenticator import Authenticator
 from drivers.Auth.Authorizer import Authorizer
 from drivers.Auth.Authenticator import AuthenticatorData
@@ -34,21 +34,21 @@ from time import monotonic
 logger = logging.getLogger(__name__)
 
 class MemberLoginStub(DriverBase):
-    _events_ = [Signals.CACHED_DATA, Signals.FRESH_DATA, Signals.SWIPE_10]
+    _events_ = [KeyMasterSignals.CACHED_DATA, KeyMasterSignals.FRESH_DATA, KeyMasterSignals.SWIPE_10]
     def setup(self):
         super().setup()
         self._death_of_rats = self.config.get('DeathOfRats', None)
         self._state = 1
         self._red = 0
         self._blue = 0
-        self.subscribe(None, Signals.USER_AUTHORIZED, self.receive_user_authorized, determines_start_order=False)
-        self.subscribe(None, Signals.USER_LOGIN_FAILED, self.receive_user_login_failed, determines_start_order=False)
+        self.subscribe(None, KeyMasterSignals.USER_AUTHORIZED, self.receive_user_authorized, determines_start_order=False)
+        self.subscribe(None, KeyMasterSignals.USER_LOGIN_FAILED, self.receive_user_login_failed, determines_start_order=False)
     def startup(self):
         super().startup()
         self.open_for_business()
         self.call_after(0.10, self.publish_first_swipe10)
     def publish_first_swipe10(self):
-        self.publish(Signals.SWIPE_10, monotonic(), '0006276739')  # red tag
+        self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0006276739')  # red tag
     def receive_user_authorized(self, data):
         if data.rfid == '0006276739':  # red tag
             assert self._state == 2
@@ -56,9 +56,9 @@ class MemberLoginStub(DriverBase):
             assert data.authorized
             assert Permission('power') in data.effective_rights
             if self._red == 1:
-                self.publish(Signals.SWIPE_10, monotonic(), '0006276739')  # red tag
+                self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0006276739')  # red tag
             else:
-                self.publish(Signals.SWIPE_10, monotonic(), '0002864796')  # blue tag
+                self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0002864796')  # blue tag
         elif data.rfid == '0002864796':  # blue tag
             assert self._state == 2
             self._blue +=1
@@ -69,7 +69,7 @@ class MemberLoginStub(DriverBase):
     def receive_user_login_failed(self, data):
         if data.rfid == '0006276739':  # red tag
             assert self._state == 1
-            self.publish(Signals.SWIPE_10, monotonic(), '0002864796')  # blue tag
+            self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0002864796')  # blue tag
         elif data.rfid == '0002864796':  # blue tag
             assert self._state == 1
             self._state += 1
@@ -84,8 +84,8 @@ class MemberLoginStub(DriverBase):
                         'fullName':'Red Green',
                         'groups':['Members', 'Automotive 102 (Lift Training)'],
                         'username':'redgreen'}}}
-            self.publish(Signals.CACHED_DATA, member_data)
-            self.publish(Signals.SWIPE_10, monotonic(), '0006276739')  # red tag
+            self.publish(KeyMasterSignals.CACHED_DATA, member_data)
+            self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0006276739')  # red tag
 
 def test_authenticator_001(caplog):
     #caplog.set_level(logging.INFO)

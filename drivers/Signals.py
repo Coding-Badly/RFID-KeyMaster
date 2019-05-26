@@ -22,18 +22,29 @@
   limitations under the License.
 
 ============================================================================="""
+from enum import IntEnum, auto
 
-STOP_NOW                    = 'stop_now'
-CONTROL_TARGET              = 'control_target'
-TARGET_ENGAGED              = 'target_engaged'
-SWIPE_10                    = 'swipe_10'
-FRESH_DATA                  = 'fresh_member_data'
-CACHED_DATA                 = 'cached_member_data'
-USER_LOGGED_IN              = 'user_logged_in'
-USER_LOGGED_OUT             = 'user_logged_out'
-USER_LOGIN_FAILED           = 'user_login_failed'
-USER_AUTHORIZED             = 'user_authoried'
-CURRENT_FLOWING             = 'current_flowing'
+class Signals(IntEnum):
+    GET_SUPER_STATE = auto()
+    INITIALIZE_STATE = auto()
+    ENTER_STATE = auto()
+    EXIT_STATE = auto()
+    STOP_NOW = auto()
+    FIRST_USER_DEFINED = auto()
+
+class KeyMasterSignals(IntEnum):
+    FIRST = Signals.FIRST_USER_DEFINED
+    CONTROL_TARGET = auto()
+    TARGET_ENGAGED = auto()
+    SWIPE_10 = auto()
+    FRESH_DATA = auto()
+    CACHED_DATA = auto()
+    USER_LOGGED_IN = auto()
+    USER_LOGGED_OUT = auto()
+    USER_LOGIN_FAILED = auto()
+    USER_AUTHORIZED = auto()
+    CURRENT_FLOWING = auto()
+
 # rmv LOGIN_RFID_NOT_FOUND        = 'login_rfid_not_found'
 # rmv LOGIN_PERMISSION_DENIED     = 'login_permission_denied'
 # rmv LOGIN_SUCCESS               = 'login_success'
