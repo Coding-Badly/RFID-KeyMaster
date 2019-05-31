@@ -26,7 +26,7 @@ if platform.system() == 'Windows':
     pytest.skip("skipping tests that will not run on Windows", allow_module_level=True)
 
 from drivers.DriverBase import DriverGroup, DriverBase, DeathOfRats
-from drivers.Signals import KeyMasterSignals
+from drivers.signals import KeyMasterSignals
 from drivers.Interface.PiFaceDigital2Interface import PiFaceDigital2Relays
 from drivers.Test.RunForSeconds import RunForSeconds
 import logging

@@ -20,7 +20,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers.Signals import KeyMasterSignals
+from drivers.signals import KeyMasterSignals
 from drivers.Auth.Authenticator import Authenticator
 from drivers.DriverBase import DriverGroup, DriverBase
 from drivers.Test.RunForSeconds import RunForSeconds

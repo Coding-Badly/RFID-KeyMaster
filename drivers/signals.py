@@ -44,6 +44,7 @@ class KeyMasterSignals(IntEnum):
     USER_LOGIN_FAILED = auto()
     USER_AUTHORIZED = auto()
     CURRENT_FLOWING = auto()
+    LAST = auto()
 
 # rmv LOGIN_RFID_NOT_FOUND        = 'login_rfid_not_found'
 # rmv LOGIN_PERMISSION_DENIED     = 'login_permission_denied'

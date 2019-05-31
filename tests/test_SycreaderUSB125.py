@@ -25,7 +25,7 @@ import pytest
 if platform.system() == 'Windows':
     pytest.skip("skipping tests that will not run on Windows", allow_module_level=True)
 
-from drivers.Signals import Signals, KeyMasterSignals
+from drivers.signals import Signals, KeyMasterSignals
 from drivers.DriverBase import DriverBase, DriverGroup
 from drivers.RFID.SycreaderUSB125 import SycreaderUSB125
 from drivers.RFID.SycreaderUSB125 import find_an_saor_rfid_readers

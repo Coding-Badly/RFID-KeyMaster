@@ -22,7 +22,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers.Signals import KeyMasterSignals
+from drivers.signals import KeyMasterSignals
 from drivers.DriverBase import DriverQueuePlusSelect, DriverBase
 from enum import Enum
 import evdev

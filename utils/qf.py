@@ -31,25 +31,6 @@ class Signals(IntEnum):
 # rmv Q_EXIT_SIG   =  3
 Q_USER_SIG   = 10
 
-class QEvent():
-    def __init__(self, signal):
-        self.signal = signal
-    def __eq__(self, other):
-        if isinstance(other, IntEnum):
-            return other.value == self.signal
-            
-        else:
-            return super().__eq__(other)
-
-def create_global_events(an_enum):
-    module = sys.modules[__name__]
-    for e1 in an_enum:
-        gn = 'EVENT_' + e1.name
-        gv = QEvent(e1.value)
-        setattr(module, gn, gv)
-
-create_global_events(Signals)
-
 
 class KeyMasterSignals(IntEnum):
     HARDWARE_CHANGED = Signals.FIRST_USER_DEFINED

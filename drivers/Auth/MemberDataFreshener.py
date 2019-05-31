@@ -41,7 +41,7 @@
   limitations under the License.
 
 ============================================================================="""
-from drivers.Signals import KeyMasterSignals
+from drivers.signals import KeyMasterSignals
 from drivers.DriverBase import DriverBase
 import json
 import logging

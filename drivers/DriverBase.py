@@ -27,7 +27,7 @@
 ============================================================================="""
 from collections import defaultdict, OrderedDict
 # rmv from drivers import Signals
-from drivers.Signals import Signals
+from drivers.signals import Signals
 from threading import Thread, Event
 from exceptions import DriverWontStartError, LeftOverEdgesError
 from exceptions.RequiredDriverException import RequiredDriverException
