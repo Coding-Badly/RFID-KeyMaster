@@ -66,111 +66,111 @@ class OneStateWonder(StateMachine):
 
 class TwoStateWonder(StateMachine):
     def _get_initial_state(self):
-        return self.state1
-    def state1(self, event):
+        return self.s1
+    def s1(self, event):
         if event == Signals.INITIALIZE_STATE:
-            self._initial_transition(self.state11)
+            self._initial_transition(self.s11)
             return None
         if event == Signals.ENTER_STATE:
-            logger.info('state1:ENTER_STATE')
+            logger.info('s1:ENTER_STATE')
             return None
         if event == LocalTestSignals.TEST_1:
-            logger.info('state1:TEST_1')
+            logger.info('s1:TEST_1')
             return None
         return self._top_state
-    def state11(self, event):
+    def s11(self, event):
         if event == Signals.ENTER_STATE:
-            logger.info('state11:ENTER_STATE')
+            logger.info('s11:ENTER_STATE')
             return None
         if event == LocalTestSignals.TEST_2:
-            logger.info('state11:TEST_2')
-            self._transition(self.state12)
+            logger.info('s11:TEST_2')
+            self._transition(self.s12)
             return None
         if event == LocalTestSignals.TEST_3:
-            logger.info('state11:TEST_3')
-            self._transition(self.state12)
+            logger.info('s11:TEST_3')
+            self._transition(self.s12)
             return None
-        return self.state1
-    def state12(self, event):
+        return self.s1
+    def s12(self, event):
         if event == Signals.ENTER_STATE:
-            logger.info('state12:ENTER_STATE')
+            logger.info('s12:ENTER_STATE')
             return None
         if event == LocalTestSignals.TEST_2:
-            logger.info('state12:TEST_2')
+            logger.info('s12:TEST_2')
             return None
-        return self.state1
+        return self.s1
 
 class AllTransitionsMachine(StateMachine):
     def _after_init(self):
         super()._after_init()
         self._recording = list()
     def _get_initial_state(self):
-        return self.state1
+        return self.s1
     def _record(self, name, event):
         s1 = self._state.__func__.__name__
         if event != Signals.GET_SUPER_STATE:
             self._recording.append((name, event, s1))
         logger.info('{:<12s}- {}'.format(name, event, s1))
-    def state1(self, event):
-        self._record('state1', event)
+    def s1(self, event):
+        self._record('s1', event)
         if event == Signals.INITIALIZE_STATE:
-            self._initial_transition(self.state11)
+            self._initial_transition(self.s11)
             return None
         if event == LocalTestSignals.TEST_TO_SELF:
-            self._transition(self.state1)
+            self._transition(self.s1)
             return None
         if event == LocalTestSignals.TEST_TO_SIBLING:
-            self._transition(self.state2)
+            self._transition(self.s2)
             return None
         if event == LocalTestSignals.TEST_TO_FINAL:
             self._transition(self._final_state)
             return None
         return self._top_state
-    def state11(self, event):
-        self._record('state11', event)
+    def s11(self, event):
+        self._record('s11', event)
         if event == LocalTestSignals.TEST_TO_COUSIN:
-            self._transition(self.state22)
+            self._transition(self.s22)
             return None
-        return self.state1
+        return self.s1
 
-    def state2(self, event):
-        self._record('state2', event)
+    def s2(self, event):
+        self._record('s2', event)
         if event == LocalTestSignals.TEST_TO_SELF:
-            self._transition(self.state2)
+            self._transition(self.s2)
             return None
         if event == LocalTestSignals.TEST_TO_SIBLING:
-            self._transition(self.state3)
+            self._transition(self.s3)
             return None
         if event == LocalTestSignals.TEST_TO_FINAL:
             self._transition(self._final_state)
             return None
         return self._top_state
-    def state22(self, event):
-        self._record('state22', event)
+    def s22(self, event):
+        self._record('s22', event)
         if event == LocalTestSignals.TEST_TO_COUSIN:
-            self._transition(self.state33)
+            self._transition(self.s33)
             return None
-        return self.state2
+        return self.s2
 
-    def state3(self, event):
-        self._record('state3', event)
+    def s3(self, event):
+        self._record('s3', event)
         if event == LocalTestSignals.TEST_TO_SELF:
-            self._transition(self.state3)
+            self._transition(self.s3)
             return None
         if event == LocalTestSignals.TEST_TO_SIBLING:
-            self._transition(self.state1)
+            self._transition(self.s1)
             return None
         if event == LocalTestSignals.TEST_TO_COUSIN:
-            if self._is_in(self.state33):
-                self._transition(self.state11)
+            if self._is_in(self.s33):
+                self._transition(self.s11)
                 return None
         if event == LocalTestSignals.TEST_TO_FINAL:
             self._transition(self._final_state)
             return None
         return self._top_state
-    def state33(self, event):
-        self._record('state33', event)
-        return self.state3
+    def s33(self, event):
+        self._record('s33', event)
+        return self.s3
 
 def test_cannot_create_base():
     with pytest.raises(TypeError):
@@ -209,33 +209,64 @@ def test_siblings(caplog):
     e1 = list()
     tm1 = AllTransitionsMachine()
 
+"""
+s1          - GET_SUPER_STATE
+s1          - ENTER_STATE
+s1          - INITIALIZE_STATE
+s11         - GET_SUPER_STATE
+s11         - ENTER_STATE
+s11         - INITIALIZE_STATE
+s11         - EXIT_STATE
+s2          - GET_SUPER_STATE
+s1          - GET_SUPER_STATE
+s1          - EXIT_STATE
+s2          - ENTER_STATE
+s2          - INITIALIZE_STATE
+s3          - GET_SUPER_STATE
+s2          - GET_SUPER_STATE
+s2          - EXIT_STATE
+s3          - ENTER_STATE
+s3          - INITIALIZE_STATE
+s1          - GET_SUPER_STATE
+s3          - GET_SUPER_STATE
+s3          - EXIT_STATE
+s1          - ENTER_STATE
+s1          - INITIALIZE_STATE
+s11         - GET_SUPER_STATE
+s11         - ENTER_STATE
+s11         - INITIALIZE_STATE
+Fini.
+"""
+
     tm1.initialize_machine()
-    e1.append(('state1', 'ENTER_STATE', 'state1'))
-    e1.append(('state1', 'INITIALIZE_STATE', 'state1'))
-    e1.append(('state11', 'ENTER_STATE', 'state11'))
-    e1.append(('state11', 'INITIALIZE_STATE', 'state11'))
+    e1.append(('s1', 'ENTER_STATE', 's1'))
+    e1.append(('s1', 'INITIALIZE_STATE', 's1'))
+    e1.append(('s11', 'ENTER_STATE', 's11'))
+    e1.append(('s11', 'INITIALIZE_STATE', 's11'))
+
+    # fix: Include some TEST_TO_SELF
 
     tm1.process(EVENT_TEST_TO_SIBLING)
-    e1.append(('state11', 'TEST_TO_SIBLING', 'state11'))
-    e1.append(('state1', 'TEST_TO_SIBLING', 'state11'))
-    e1.append(('state11', 'EXIT_STATE', 'state11'))
-    e1.append(('state1', 'EXIT_STATE', 'state1'))
-    e1.append(('state2', 'ENTER_STATE', '_top_state'))
-    e1.append(('state2', 'INITIALIZE_STATE', 'state2'))
+    e1.append(('s11', 'TEST_TO_SIBLING', 's11'))
+    e1.append(('s1', 'TEST_TO_SIBLING', 's11'))
+    e1.append(('s11', 'EXIT_STATE', 's11'))
+    e1.append(('s1', 'EXIT_STATE', 's1'))
+    e1.append(('s2', 'ENTER_STATE', '_top_state'))
+    e1.append(('s2', 'INITIALIZE_STATE', 's2'))
     
     tm1.process(EVENT_TEST_TO_SIBLING)
-    e1.append(('state2', 'TEST_TO_SIBLING', 'state2'))
-    e1.append(('state2', 'EXIT_STATE', 'state2'))
-    e1.append(('state3', 'ENTER_STATE', '_top_state'))
-    e1.append(('state3', 'INITIALIZE_STATE', 'state3'))
+    e1.append(('s2', 'TEST_TO_SIBLING', 's2'))
+    e1.append(('s2', 'EXIT_STATE', 's2'))
+    e1.append(('s3', 'ENTER_STATE', '_top_state'))
+    e1.append(('s3', 'INITIALIZE_STATE', 's3'))
 
     tm1.process(EVENT_TEST_TO_SIBLING)
-    e1.append(('state3', 'TEST_TO_SIBLING', 'state3'))
-    e1.append(('state3', 'EXIT_STATE', 'state3'))
-    e1.append(('state1', 'ENTER_STATE', '_top_state'))
-    e1.append(('state1', 'INITIALIZE_STATE', 'state1'))
-    e1.append(('state11', 'ENTER_STATE', 'state11'))
-    e1.append(('state11', 'INITIALIZE_STATE', 'state11'))
+    e1.append(('s3', 'TEST_TO_SIBLING', 's3'))
+    e1.append(('s3', 'EXIT_STATE', 's3'))
+    e1.append(('s1', 'ENTER_STATE', '_top_state'))
+    e1.append(('s1', 'INITIALIZE_STATE', 's1'))
+    e1.append(('s11', 'ENTER_STATE', 's11'))
+    e1.append(('s11', 'INITIALIZE_STATE', 's11'))
 
     tm2 = [(e[0], str(e[1]), e[2]) for e in tm1._recording]
     #logger.info(tm2)
