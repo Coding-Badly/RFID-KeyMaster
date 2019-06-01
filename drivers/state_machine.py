@@ -207,7 +207,7 @@ class StateMachine(abc.ABC):
         if path_to_top is None:
             #logger.info('Determine path to top for {}.'.format(start))
             path_to_top = self._get_path_to_top(start)
-            cache[start] = path_to_top
+            #cache[start] = path_to_top
         return path_to_top
     def _transition(self, target):
         if target == self._top_state:
@@ -254,4 +254,9 @@ class StateMachine(abc.ABC):
             raise MalformedStateMachineError()
         self._initialize_from_state()
     def _is_in(self, state):
-        pass
+        rover = self._state
+        while rover is not None:
+            if self._same_states(rover, state):
+                return True
+            rover = self._get_super_state(rover)
+        return False
