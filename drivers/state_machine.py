@@ -150,12 +150,16 @@ class StateMachine(abc.ABC):
     @staticmethod
     def _same_states(s1, s2):
         return s1 == s2
-    @staticmethod
-    def _state_enter(s1):
-        return s1(EVENT_ENTER_STATE)
-    @staticmethod
-    def _state_exit(s1):
-        return s1(EVENT_EXIT_STATE)
+    def _state_enter(self, s1):
+        rv = s1(EVENT_ENTER_STATE)
+        self._state = s1
+        # rmv return rv
+    def _state_exit(self, s1):
+        if not self._same_states(s1, self._state):
+            raise MalformedStateMachineError()
+        rv = s1(EVENT_EXIT_STATE)
+        self._state = rv if rv is not None else self._get_super_state(s1)
+        # rmv return rv
     @staticmethod
     def _state_init(s1):
         return s1(EVENT_INITIALIZE_STATE) is None
@@ -209,11 +213,9 @@ class StateMachine(abc.ABC):
         if target == self._top_state:
             raise TopCannotBeTargetError()
         # Exit all states from _state to _source
-        s1 = self._state
-        while not self._same_states(s1, self._source):
-            #logger.info('State Exit: {}'.format(s1))
-            s2 = self._state_exit(s1)
-            s1 = s2 if s2 is not None else self._get_super_state(s1)
+        while not self._same_states(self._state, self._source):
+            #logger.info('State Exit: {}'.format(self._state))
+            self._state_exit(self._state)
         # Fetch / build paths from each end to _top_state
         ptt = self._path_to_top
         source_to_top = self._get_path_to_top_cached(ptt, self._source)
@@ -248,5 +250,8 @@ class StateMachine(abc.ABC):
         for i1 in range(ti-1, -1, -1):
             #logger.info('#{}: N: {}'.format(i1, target_to_top[i1]))
             self._state_enter(target_to_top[i1])
-        self._state = target
+        if not self._same_states(self._state, target):
+            raise MalformedStateMachineError()
         self._initialize_from_state()
+    def _is_in(self, state):
+        pass
