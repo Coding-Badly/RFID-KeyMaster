@@ -20,6 +20,8 @@ class LocalTestSignals(IntEnum):
     TEST_TO_SELF = auto()
     TEST_TO_SIBLING = auto()
     TEST_TO_COUSIN = auto()
+    TEST_TO_PARENT = auto()
+    TEST_TO_CHILD = auto()
     TEST_TO_FINAL = auto()
     LAST = auto()
 
@@ -243,9 +245,13 @@ def test_siblings(caplog):
     e1.append(('s11', 'ENTER_STATE', 's11'))
     e1.append(('s11', 'INITIALIZE_STATE', 's11'))
 
-    tm1.process(EVENT_TEST_TO_COUSIN)
-    tm1.process(EVENT_TEST_TO_COUSIN)
-    tm1.process(EVENT_TEST_TO_COUSIN)
+    tm1.process(EVENT_TEST_TO_PARENT)
+
+    #tm1.process(EVENT_TEST_TO_COUSIN)
+    #tm1.process(EVENT_TEST_TO_CHILD)
+    
+    #tm1.process(EVENT_TEST_TO_COUSIN)
+    #tm1.process(EVENT_TEST_TO_COUSIN)
 
     tm2 = [(e[0], str(e[1]), e[2]) for e in tm1._recording]
     #logger.info(tm2)
