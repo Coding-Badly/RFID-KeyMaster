@@ -133,6 +133,9 @@ class AllTransitionsMachine(StateMachine):
         if event == LocalTestSignals.TEST_TO_COUSIN:
             self._transition(self.s22)
             return None
+        if event == LocalTestSignals.TEST_TO_PARENT:
+            self._transition(self.s1)
+            return None
         return self.s1
 
     def s2(self, event):
