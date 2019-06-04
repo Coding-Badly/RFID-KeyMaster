@@ -31,80 +31,9 @@ class LocalTestSignals(IntEnum):
 
 create_state_machine_events(LocalTestSignals, __name__)
 
-def fix_test_events_and_signals():
+def test_events_and_signals():
     assert Signals.ENTER_STATE.value == EVENT_ENTER_STATE.signal
     assert Signals.ENTER_STATE == EVENT_ENTER_STATE
-
-class OneStateWonder(StateMachine):
-    def _after_init(self):
-        super()._after_init()
-        self.processed = set()
-    def _get_initial_state(self):
-        return self.one_state
-    def one_state(self, event):
-        if event == Signals.ENTER_STATE:
-            logger.info('one_state:ENTER_STATE')
-            self.processed.add(Signals.ENTER_STATE)
-            return None
-        if event == LocalTestSignals.TEST_1:
-            logger.info('one_state:TEST_1')
-            self.processed.add(LocalTestSignals.TEST_1)
-            self._post_signal(LocalTestSignals.TEST_3)
-            return None
-        if event == LocalTestSignals.TEST_3:
-            logger.info('one_state:TEST_3')
-            self.processed.add(LocalTestSignals.TEST_3)
-            self._post_signal(LocalTestSignals.TEST_4)
-            self._post_signal(LocalTestSignals.TEST_5)
-            return None
-        if event == LocalTestSignals.TEST_4:
-            logger.info('one_state:TEST_4')
-            self.processed.add(LocalTestSignals.TEST_4)
-            return None
-        if event == LocalTestSignals.TEST_5:
-            logger.info('one_state:TEST_5')
-            self.processed.add(LocalTestSignals.TEST_5)
-            return None
-        if event == LocalTestSignals.TEST_TO_TOP:
-            self._transition(self._top_state)
-            return None
-        return self._top_state
-
-class TwoStateWonder(StateMachine):
-    def _get_initial_state(self):
-        return self.s1
-    def s1(self, event):
-        if event == Signals.INITIALIZE_STATE:
-            self._initial_transition(self.s11)
-            return None
-        if event == Signals.ENTER_STATE:
-            logger.info('s1:ENTER_STATE')
-            return None
-        if event == LocalTestSignals.TEST_1:
-            logger.info('s1:TEST_1')
-            return None
-        return self._top_state
-    def s11(self, event):
-        if event == Signals.ENTER_STATE:
-            logger.info('s11:ENTER_STATE')
-            return None
-        if event == LocalTestSignals.TEST_2:
-            logger.info('s11:TEST_2')
-            self._transition(self.s12)
-            return None
-        if event == LocalTestSignals.TEST_3:
-            logger.info('s11:TEST_3')
-            self._transition(self.s12)
-            return None
-        return self.s1
-    def s12(self, event):
-        if event == Signals.ENTER_STATE:
-            logger.info('s12:ENTER_STATE')
-            return None
-        if event == LocalTestSignals.TEST_2:
-            logger.info('s12:TEST_2')
-            return None
-        return self.s1
 
 class AllTransitionsMachine(StateMachine):
     def _after_init(self):
@@ -127,9 +56,6 @@ class AllTransitionsMachine(StateMachine):
             return None
         if event == LocalTestSignals.TEST_TO_SIBLING:
             self._transition(self.s2)
-            return None
-        if event == LocalTestSignals.TEST_TO_FINAL:
-            self._transition(self._final_state)
             return None
         return self._top_state
     def s11(self, event):
@@ -166,9 +92,6 @@ class AllTransitionsMachine(StateMachine):
             return None
         if event == LocalTestSignals.TEST_TO_GRANDCHILD:
             self._transition(self.s211)
-            return None
-        if event == LocalTestSignals.TEST_TO_FINAL:
-            self._transition(self._final_state)
             return None
         return self._top_state
     def s21(self, event):
@@ -262,39 +185,38 @@ class AllTransitionsMachine(StateMachine):
         if event == LocalTestSignals.TEST_4:
             self._transition(self.s4)
             return None
+        if event == LocalTestSignals.TEST_TO_TOP:
+            self._transition(self._top_state)
+            return None
+        if event == LocalTestSignals.TEST_TO_DISTANT:
+            self._transition(self.s311)
+            return None
         return self.s411
 
-def fix_test_cannot_create_base():
+def test_cannot_create_base():
     with pytest.raises(TypeError):
         tm1 = StateMachine()
 
-#def test_cannot_target_top():
-    tm1 = OneStateWonder()
+def test_cannot_target_top():
+    tm1 = AllTransitionsMachine()
     with pytest.raises(TopCannotBeTargetError):
         tm1._transition(tm1._top_state)
 
-def fix_test_check_get_super_state():
-    tm1 = OneStateWonder()
-    assert tm1._get_super_state(tm1.one_state) == tm1._top_state
-
-def fix_test_simple_normal(caplog):
-    caplog.set_level(logging.INFO)
-    tm1 = OneStateWonder()
-    tm1.initialize_machine()
-    assert tm1.process(EVENT_TEST_1)
-    assert not tm1.process(EVENT_TEST_2)
-    assert tm1.processed == set([Signals.ENTER_STATE, 
-            LocalTestSignals.TEST_1, 
-            LocalTestSignals.TEST_3, 
-            LocalTestSignals.TEST_4, 
-            LocalTestSignals.TEST_5])
-    with pytest.raises(TopCannotBeTargetError):
-        tm1.process(EVENT_TEST_TO_TOP)
-    tm1 = TwoStateWonder()
-    tm1.initialize_machine()
-    #assert tm1.process(EVENT_TEST_1)
-    #assert tm1.process(EVENT_TEST_2)
-    #assert tm1.process(EVENT_TEST_3)
+def test_check_get_super_state():
+    tm1 = AllTransitionsMachine()
+    assert tm1._get_super_state(tm1.s1) == tm1._top_state
+    assert tm1._get_super_state(tm1.s11) == tm1.s1
+    assert tm1._get_super_state(tm1.s111) == tm1.s11
+    assert tm1._get_super_state(tm1.s2) == tm1._top_state
+    assert tm1._get_super_state(tm1.s21) == tm1.s2
+    assert tm1._get_super_state(tm1.s211) == tm1.s21
+    assert tm1._get_super_state(tm1.s3) == tm1._top_state
+    assert tm1._get_super_state(tm1.s31) == tm1.s3
+    assert tm1._get_super_state(tm1.s311) == tm1.s31
+    assert tm1._get_super_state(tm1.s4) == tm1._top_state
+    assert tm1._get_super_state(tm1.s41) == tm1.s4
+    assert tm1._get_super_state(tm1.s411) == tm1.s41
+    assert tm1._get_super_state(tm1.s4111) == tm1.s411
 
 def test_all_transitions(caplog):
     caplog.set_level(logging.INFO)
@@ -302,42 +224,48 @@ def test_all_transitions(caplog):
     tm1 = AllTransitionsMachine()
 
     tm1.initialize_machine()
-    tm1.process(EVENT_TEST_TO_SELF)
-    tm1.process(EVENT_TEST_TO_SIBLING)
-    tm1.process(EVENT_TEST_TO_SELF)
-    tm1.process(EVENT_TEST_TO_SIBLING)
-    tm1.process(EVENT_TEST_TO_SELF)
-    tm1.process(EVENT_TEST_TO_SIBLING)
-    tm1.process(EVENT_TEST_TO_PARENT)
-    tm1.process(EVENT_TEST_TO_COUSIN)
-    tm1.process(EVENT_TEST_TO_PARENT)
-    tm1.process(EVENT_TEST_TO_CHILD)        # <---
-    tm1.process(EVENT_TEST_TO_COUSIN)
-    tm1.process(EVENT_TEST_TO_PARENT)
-    tm1.process(EVENT_TEST_TO_CHILD)
-    tm1.process(EVENT_TEST_TO_COUSIN)
-    tm1.process(EVENT_TEST_TO_CHILD)
-    tm1.process(EVENT_TEST_IDLE);
-    tm1.process(EVENT_TEST_TO_SELF);
-    tm1.process(EVENT_TEST_TO_GRANDPARENT);
-    tm1.process(EVENT_TEST_TO_COUSIN);
-    tm1.process(EVENT_TEST_TO_CHILD);
-    tm1.process(EVENT_TEST_IDLE);
-    tm1.process(EVENT_TEST_TO_COUSIN)
-    tm1.process(EVENT_TEST_TO_PARENT);
-    tm1.process(EVENT_TEST_TO_GRANDCHILD);
-    tm1.process(EVENT_TEST_TO_SIBLING)
-    tm1.process(EVENT_TEST_TO_SIBLING)
-    tm1.process(EVENT_TEST_TO_GRANDCHILD);
+    assert tm1.process(EVENT_TEST_TO_SELF)
+    assert tm1.process(EVENT_TEST_TO_SIBLING)
+    assert tm1.process(EVENT_TEST_TO_SELF)
+    assert tm1.process(EVENT_TEST_TO_SIBLING)
+    assert tm1.process(EVENT_TEST_TO_SELF)
+    assert tm1.process(EVENT_TEST_TO_SIBLING)
+    assert tm1.process(EVENT_TEST_TO_PARENT)
+    assert tm1.process(EVENT_TEST_TO_COUSIN)
+    assert tm1.process(EVENT_TEST_TO_PARENT)
+    assert tm1.process(EVENT_TEST_TO_CHILD)
+    assert tm1.process(EVENT_TEST_TO_COUSIN)
+    assert tm1.process(EVENT_TEST_TO_PARENT)
+    assert tm1.process(EVENT_TEST_TO_CHILD)
+    assert tm1.process(EVENT_TEST_TO_COUSIN)
+    assert tm1.process(EVENT_TEST_TO_CHILD)
+    assert not tm1.process(EVENT_TEST_IDLE)
+    assert tm1.process(EVENT_TEST_TO_SELF)
+    assert tm1.process(EVENT_TEST_TO_GRANDPARENT)
+    assert tm1.process(EVENT_TEST_TO_COUSIN)
+    assert tm1.process(EVENT_TEST_TO_CHILD)
+    assert not tm1.process(EVENT_TEST_IDLE)
+    assert tm1.process(EVENT_TEST_TO_COUSIN)
+    assert tm1.process(EVENT_TEST_TO_PARENT)
+    assert tm1.process(EVENT_TEST_TO_GRANDCHILD)
+    assert tm1.process(EVENT_TEST_TO_SIBLING)
+    assert tm1.process(EVENT_TEST_TO_SIBLING)
+    assert tm1.process(EVENT_TEST_TO_GRANDCHILD)
+    assert tm1.process(EVENT_TEST_TO_DISTANT)
+    assert tm1.process(EVENT_TEST_1)
+    assert tm1.process(EVENT_TEST_2)
+    assert tm1.process(EVENT_TEST_3)
+    assert tm1.process(EVENT_TEST_4)
+    assert tm1.process(EVENT_TEST_5)
+    assert not tm1.process(EVENT_TEST_TO_FINAL)
+    with pytest.raises(TopCannotBeTargetError):
+        tm1.process(EVENT_TEST_TO_TOP)
+    assert tm1.process(EVENT_TEST_TO_DISTANT)
+    assert tm1.process(EVENT_TEST_TO_FINAL)
+    for i1 in range(LocalTestSignals.FIRST, LocalTestSignals.LAST+1):
+        assert not tm1.process(i1)
 
-    tm1.process(EVENT_TEST_TO_DISTANT)
-    tm1.process(EVENT_TEST_1)
-    tm1.process(EVENT_TEST_2)
-    tm1.process(EVENT_TEST_3)
-    tm1.process(EVENT_TEST_4)
-    tm1.process(EVENT_TEST_5)
-
-    tm2 = [(e[0], str(e[1]), e[2]) for e in tm1._recording]
-    #logger.info(tm2)
+    tm2 = [(e[0], str(e[1])) for e in tm1._recording]
+    logger.info(tm2)
     #logger.info(e1)
     #assert e1 == tm2
