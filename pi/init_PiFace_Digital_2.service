@@ -1,5 +1,5 @@
 
-# sudo cp /home/pi/dms/init_PiFace_Digital_2.service /etc/systemd/system/init_PiFace_Digital_2.service
+# sudo cp /home/pi/RFID-KeyMaster/pi/init_PiFace_Digital_2.service /etc/systemd/system/init_PiFace_Digital_2.service
 # sudo systemctl enable init_PiFace_Digital_2.service
 # sudo systemctl disable init_PiFace_Digital_2.service
 
@@ -9,7 +9,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/python3 -u init_PiFace_Digital_2.py
-WorkingDirectory=/home/pi/dms
+WorkingDirectory=/home/pi/RFID-KeyMaster/pi
 StandardOutput=inherit
 StandardError=inherit
 #User=pi

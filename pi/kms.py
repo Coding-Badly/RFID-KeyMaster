@@ -278,7 +278,16 @@ locales\tlocales/default_environment_locale\tselect\ten_US.UTF-8
         subprocess.run(['git','clone','git://github.com/piface/pifacedigitalio.git','/home/pi/pifacedigitalio'], check=True)
         subprocess.run(['python3','/home/pi/pifacedigitalio/setup.py','install'], cwd='/home/pi/pifacedigitalio/', check=True)
         subprocess.run(['rm','-rf','/home/pi/pifacedigitalio'], check=True)
-    #elif csm.get_current_step() == 16:
+        go_again = True
+        csm.increment_current_step()
+    elif csm.get_current_step() == 16:
+        wall_and_print('Install PiFace Digital 2 initialization service.', csm.get_current_step())
+        subprocess.run(['cp','/home/pi/RFID-KeyMaster/pi/init_PiFace_Digital_2.service','/etc/systemd/system/init_PiFace_Digital_2.service'], check=True)
+        subprocess.run(['systemctl','enable','init_PiFace_Digital_2.service'], check=True)
+        #go_again = True
+        need_reboot = True
+        csm.increment_current_step()
+    #elif csm.get_current_step() == 17:
     #    wall_and_print('One last reboot for good measure.', csm.get_current_step())
     #    need_reboot = True
     #    csm.increment_current_step()
