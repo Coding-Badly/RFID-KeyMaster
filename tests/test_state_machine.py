@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 class LocalTestSignals(IntEnum):
     __test__ = False
     FIRST = KeyMasterSignals.FIRST
+    TEST_IDLE = auto()
     TEST_1 = auto()
     TEST_2 = auto()
     TEST_3 = auto()
@@ -22,12 +23,15 @@ class LocalTestSignals(IntEnum):
     TEST_TO_COUSIN = auto()
     TEST_TO_PARENT = auto()
     TEST_TO_CHILD = auto()
+    TEST_TO_GRANDPARENT = auto()
+    TEST_TO_GRANDCHILD = auto()
+    TEST_TO_DISTANT = auto()
     TEST_TO_FINAL = auto()
     LAST = auto()
 
 create_state_machine_events(LocalTestSignals, __name__)
 
-def test_events_and_signals():
+def fix_test_events_and_signals():
     assert Signals.ENTER_STATE.value == EVENT_ENTER_STATE.signal
     assert Signals.ENTER_STATE == EVENT_ENTER_STATE
 
@@ -131,13 +135,24 @@ class AllTransitionsMachine(StateMachine):
     def s11(self, event):
         self._record('s11', event)
         if event == LocalTestSignals.TEST_TO_COUSIN:
-            self._transition(self.s22)
+            self._transition(self.s21)
             return None
         if event == LocalTestSignals.TEST_TO_PARENT:
             self._transition(self.s1)
             return None
+        if event == LocalTestSignals.TEST_TO_CHILD:
+            self._transition(self.s111)
+            return None
         return self.s1
-
+    def s111(self, event):
+        self._record('s111', event)
+        if event == LocalTestSignals.TEST_TO_SELF:
+            self._transition(self.s111)
+            return None
+        if event == LocalTestSignals.TEST_TO_GRANDPARENT:
+            self._transition(self.s1)
+            return None
+        return self.s11
     def s2(self, event):
         self._record('s2', event)
         if event == LocalTestSignals.TEST_TO_SELF:
@@ -146,17 +161,40 @@ class AllTransitionsMachine(StateMachine):
         if event == LocalTestSignals.TEST_TO_SIBLING:
             self._transition(self.s3)
             return None
+        if event == LocalTestSignals.TEST_TO_CHILD:
+            self._transition(self.s21)
+            return None
+        if event == LocalTestSignals.TEST_TO_GRANDCHILD:
+            self._transition(self.s211)
+            return None
         if event == LocalTestSignals.TEST_TO_FINAL:
             self._transition(self._final_state)
             return None
         return self._top_state
-    def s22(self, event):
-        self._record('s22', event)
+    def s21(self, event):
+        self._record('s21', event)
         if event == LocalTestSignals.TEST_TO_COUSIN:
-            self._transition(self.s33)
+            self._transition(self.s31)
+            return None
+        if event == LocalTestSignals.TEST_TO_PARENT:
+            self._transition(self.s2)
+            return None
+        if event == LocalTestSignals.TEST_TO_CHILD:
+            self._transition(self.s211)
             return None
         return self.s2
-
+    def s211(self, event):
+        self._record('s211', event)
+        if event == LocalTestSignals.TEST_TO_SELF:
+            self._transition(self.s211)
+            return None
+        if event == LocalTestSignals.TEST_TO_GRANDPARENT:
+            self._transition(self.s2)
+            return None
+        if event == LocalTestSignals.TEST_TO_DISTANT:
+            self._transition(self.s4)
+            return None
+        return self.s21
     def s3(self, event):
         self._record('s3', event)
         if event == LocalTestSignals.TEST_TO_SELF:
@@ -166,18 +204,67 @@ class AllTransitionsMachine(StateMachine):
             self._transition(self.s1)
             return None
         if event == LocalTestSignals.TEST_TO_COUSIN:
-            if self._is_in(self.s33):
+            if self._is_in(self.s31):
                 self._transition(self.s11)
                 return None
+        if event == LocalTestSignals.TEST_TO_PARENT:
+            if self._is_in(self.s31):
+                self._transition(self.s3)
+                return None
+        if event == LocalTestSignals.TEST_TO_CHILD:
+            self._transition(self.s31)
+            return None
+        if event == LocalTestSignals.TEST_TO_GRANDCHILD:
+            self._transition(self.s311)
+            return None
         if event == LocalTestSignals.TEST_TO_FINAL:
             self._transition(self._final_state)
             return None
         return self._top_state
-    def s33(self, event):
-        self._record('s33', event)
+    def s31(self, event):
+        self._record('s31', event)
         return self.s3
+    def s311(self, event):
+        self._record('s311', event)
+        return self.s31
+    def s4(self, event):
+        self._record('s4', event)
+        if event == Signals.INITIALIZE_STATE:
+            self._initial_transition(self.s41)
+            return None
+        if event == LocalTestSignals.TEST_1:
+            self._transition(self.s4)
+            return None
+        return self._top_state
+    def s41(self, event):
+        self._record('s41', event)
+        if event == Signals.INITIALIZE_STATE:
+            self._initial_transition(self.s411)
+            return None
+        if event == LocalTestSignals.TEST_2:
+            self._transition(self.s4)
+            return None
+        if event == LocalTestSignals.TEST_5:
+            self._transition(self.s41)
+            return None
+        return self.s4
+    def s411(self, event):
+        self._record('s411', event)
+        if event == Signals.INITIALIZE_STATE:
+            self._initial_transition(self.s4111)
+            return None
+        if event == LocalTestSignals.TEST_3:
+            self._transition(self.s4)
+            return None
+        return self.s41
+    def s4111(self, event):
+        self._record('s4111', event)
+        if event == LocalTestSignals.TEST_4:
+            self._transition(self.s4)
+            return None
+        return self.s411
 
-def test_cannot_create_base():
+def fix_test_cannot_create_base():
     with pytest.raises(TypeError):
         tm1 = StateMachine()
 
@@ -186,11 +273,11 @@ def test_cannot_create_base():
     with pytest.raises(TopCannotBeTargetError):
         tm1._transition(tm1._top_state)
 
-def test_check_get_super_state():
+def fix_test_check_get_super_state():
     tm1 = OneStateWonder()
     assert tm1._get_super_state(tm1.one_state) == tm1._top_state
 
-def test_simple_normal(caplog):
+def fix_test_simple_normal(caplog):
     caplog.set_level(logging.INFO)
     tm1 = OneStateWonder()
     tm1.initialize_machine()
@@ -209,52 +296,46 @@ def test_simple_normal(caplog):
     #assert tm1.process(EVENT_TEST_2)
     #assert tm1.process(EVENT_TEST_3)
 
-def test_siblings(caplog):
+def test_all_transitions(caplog):
     caplog.set_level(logging.INFO)
     e1 = list()
     tm1 = AllTransitionsMachine()
 
     tm1.initialize_machine()
-    e1.append(('s1', 'ENTER_STATE', 's1'))
-    e1.append(('s1', 'INITIALIZE_STATE', 's1'))
-    e1.append(('s11', 'ENTER_STATE', 's11'))
-    e1.append(('s11', 'INITIALIZE_STATE', 's11'))
-
     tm1.process(EVENT_TEST_TO_SELF)
-
     tm1.process(EVENT_TEST_TO_SIBLING)
-    e1.append(('s11', 'TEST_TO_SIBLING', 's11'))
-    e1.append(('s1', 'TEST_TO_SIBLING', 's11'))
-    e1.append(('s11', 'EXIT_STATE', 's11'))
-    e1.append(('s1', 'EXIT_STATE', 's1'))
-    e1.append(('s2', 'ENTER_STATE', '_top_state'))
-    e1.append(('s2', 'INITIALIZE_STATE', 's2'))
-    
     tm1.process(EVENT_TEST_TO_SELF)
-
     tm1.process(EVENT_TEST_TO_SIBLING)
-    e1.append(('s2', 'TEST_TO_SIBLING', 's2'))
-    e1.append(('s2', 'EXIT_STATE', 's2'))
-    e1.append(('s3', 'ENTER_STATE', '_top_state'))
-    e1.append(('s3', 'INITIALIZE_STATE', 's3'))
-
     tm1.process(EVENT_TEST_TO_SELF)
-
     tm1.process(EVENT_TEST_TO_SIBLING)
-    e1.append(('s3', 'TEST_TO_SIBLING', 's3'))
-    e1.append(('s3', 'EXIT_STATE', 's3'))
-    e1.append(('s1', 'ENTER_STATE', '_top_state'))
-    e1.append(('s1', 'INITIALIZE_STATE', 's1'))
-    e1.append(('s11', 'ENTER_STATE', 's11'))
-    e1.append(('s11', 'INITIALIZE_STATE', 's11'))
-
     tm1.process(EVENT_TEST_TO_PARENT)
+    tm1.process(EVENT_TEST_TO_COUSIN)
+    tm1.process(EVENT_TEST_TO_PARENT)
+    tm1.process(EVENT_TEST_TO_CHILD)        # <---
+    tm1.process(EVENT_TEST_TO_COUSIN)
+    tm1.process(EVENT_TEST_TO_PARENT)
+    tm1.process(EVENT_TEST_TO_CHILD)
+    tm1.process(EVENT_TEST_TO_COUSIN)
+    tm1.process(EVENT_TEST_TO_CHILD)
+    tm1.process(EVENT_TEST_IDLE);
+    tm1.process(EVENT_TEST_TO_SELF);
+    tm1.process(EVENT_TEST_TO_GRANDPARENT);
+    tm1.process(EVENT_TEST_TO_COUSIN);
+    tm1.process(EVENT_TEST_TO_CHILD);
+    tm1.process(EVENT_TEST_IDLE);
+    tm1.process(EVENT_TEST_TO_COUSIN)
+    tm1.process(EVENT_TEST_TO_PARENT);
+    tm1.process(EVENT_TEST_TO_GRANDCHILD);
+    tm1.process(EVENT_TEST_TO_SIBLING)
+    tm1.process(EVENT_TEST_TO_SIBLING)
+    tm1.process(EVENT_TEST_TO_GRANDCHILD);
 
-    #tm1.process(EVENT_TEST_TO_COUSIN)
-    #tm1.process(EVENT_TEST_TO_CHILD)
-    
-    #tm1.process(EVENT_TEST_TO_COUSIN)
-    #tm1.process(EVENT_TEST_TO_COUSIN)
+    tm1.process(EVENT_TEST_TO_DISTANT)
+    tm1.process(EVENT_TEST_1)
+    tm1.process(EVENT_TEST_2)
+    tm1.process(EVENT_TEST_3)
+    tm1.process(EVENT_TEST_4)
+    tm1.process(EVENT_TEST_5)
 
     tm2 = [(e[0], str(e[1]), e[2]) for e in tm1._recording]
     #logger.info(tm2)

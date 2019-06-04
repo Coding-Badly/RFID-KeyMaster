@@ -210,48 +210,54 @@ class StateMachine(abc.ABC):
             #cache[start] = path_to_top
         return path_to_top
     def _transition(self, target):
-        if target == self._top_state:
+        if self._same_states(target, self._top_state):
             raise TopCannotBeTargetError()
         # Exit all states from _state to _source
         while not self._same_states(self._state, self._source):
             #logger.info('State Exit: {}'.format(self._state))
             self._state_exit(self._state)
-        # Fetch / build paths from each end to _top_state
-        ptt = self._path_to_top
-        source_to_top = self._get_path_to_top_cached(ptt, self._source)
-        target_to_top = self._get_path_to_top_cached(ptt, target)
-        #logger.info(source_to_top)
-        #logger.info(target_to_top)
-        # Find the least common ancestor (LCA) by searching the two lists back-to-front
-        fi = len(source_to_top) - 1
-        ti = len(target_to_top) - 1
-        if not self._same_states(source_to_top[fi], self._top_state) \
-                or not self._same_states(target_to_top[ti], self._top_state):
-            raise MalformedStateMachineError()
-        while (fi > 0) and (ti > -1):
+        # Transition to the current state is a special case.
+        if self._same_states(target, self._state):
+            self._state_exit(self._state)
+            self._state_enter(target)
+        # Otherwise the transition is exit to LCA then enter to target.
+        else:
+            # Fetch / build paths from each end to _top_state
+            ptt = self._path_to_top
+            source_to_top = self._get_path_to_top_cached(ptt, self._source)
+            target_to_top = self._get_path_to_top_cached(ptt, target)
+            #logger.info([f.__func__.__name__ for f in source_to_top])
+            #logger.info([f.__func__.__name__ for f in target_to_top])
+            # Find the least common ancestor (LCA) by searching the two lists back-to-front
+            fi = len(source_to_top) - 1
+            ti = len(target_to_top) - 1
+            if not self._same_states(source_to_top[fi], self._top_state) \
+                    or not self._same_states(target_to_top[ti], self._top_state):
+                raise MalformedStateMachineError()
+            while (fi > -1) and (ti > -1):
+                if source_to_top[fi] != target_to_top[ti]:
+                    break
+                fi -= 1
+                ti -= 1
+            # LCA is the previous pair (fi+1, ti+1)
+            fi += 1
+            ti += 1
             if source_to_top[fi] != target_to_top[ti]:
-                break
-            fi -= 1
-            ti -= 1
-        # LCA is the previous pair (fi+1, ti+1)
-        fi += 1
-        ti += 1
-        if source_to_top[fi] != target_to_top[ti]:
-            raise MalformedStateMachineError()
-        #logger.info('fi={}, ti={}'.format(fi, ti))
-        # Exit all states from _source (inclusive) to LCA (exclusive)
-        for i1 in range(0, fi):
-            # rmv s1 = source_to_top[i1].__get__(self, self.__class__)
-            # rmv logger.info('----------')
-            #logger.info('#{}: X: {}'.format(i1, source_to_top[i1]))
-            # rmv logger.info('#{}: {}'.format(i1, s1))
-            # rmv logger.info('----------')
-            self._state_exit(source_to_top[i1])
-        for i1 in range(ti-1, -1, -1):
-            #logger.info('#{}: N: {}'.format(i1, target_to_top[i1]))
-            self._state_enter(target_to_top[i1])
-        if not self._same_states(self._state, target):
-            raise MalformedStateMachineError()
+                raise MalformedStateMachineError()
+            #logger.info('fi={}, ti={}'.format(fi, ti))
+            # Exit all states from _source (inclusive) to LCA (exclusive)
+            for i1 in range(0, fi):
+                # rmv s1 = source_to_top[i1].__get__(self, self.__class__)
+                # rmv logger.info('----------')
+                #logger.info('#{}: X: {}'.format(i1, source_to_top[i1]))
+                # rmv logger.info('#{}: {}'.format(i1, s1))
+                # rmv logger.info('----------')
+                self._state_exit(source_to_top[i1])
+            for i1 in range(ti-1, -1, -1):
+                #logger.info('#{}: N: {}'.format(i1, target_to_top[i1]))
+                self._state_enter(target_to_top[i1])
+            if not self._same_states(self._state, target):
+                raise MalformedStateMachineError()
         self._initialize_from_state()
     def _is_in(self, state):
         rover = self._state
