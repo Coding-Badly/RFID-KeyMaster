@@ -248,6 +248,25 @@ locales\tlocales/default_environment_locale\tselect\ten_US.UTF-8
         go_again = True
         csm.increment_current_step()
     elif csm.get_current_step() == 14:
+        wall_and_print('Install PiFace Digital 2 packages from GitHub.', csm.get_current_step())
+        # Common
+        subprocess.run(['git','clone','git://github.com/piface/pifacecommon.git','/home/pi/python-things/pifacecommon'], check=True)
+        subprocess.run(['python3','/home/pi/python-things/pifacecommon/setup.py','install'], cwd='/home/pi/python-things/pifacecommon/', check=True)
+        #subprocess.run(['rm','-rf','/home/pi/python-things/pifacecommon'], check=True)
+        # Digital I/O
+        subprocess.run(['git','clone','git://github.com/piface/pifacedigitalio.git','/home/pi/python-things/pifacedigitalio'], check=True)
+        subprocess.run(['python3','/home/pi/python-things/pifacedigitalio/setup.py','install'], cwd='/home/pi/python-things/pifacedigitalio/', check=True)
+        #subprocess.run(['rm','-rf','/home/pi/python-things/pifacedigitalio'], check=True)
+        go_again = True
+        csm.increment_current_step()
+    elif csm.get_current_step() == 15:
+        wall_and_print('Install python-dispatch package from GitHub.', csm.get_current_step())
+        subprocess.run(['git','clone','https://github.com/Coding-Badly/python-dispatch.git','/home/pi/python-things/python-dispatch'], check=True)
+        subprocess.run(['python3','/home/pi/python-things/python-dispatch/setup.py','install'], check=True)
+        #subprocess.run(['rm','-rf','/home/pi/python-dispatch'], check=True)
+        go_again = True
+        csm.increment_current_step()
+    elif csm.get_current_step() == 16:
         wall_and_print('Clone the KeyMaster.', csm.get_current_step())
         # git clone git@github.com:Coding-Badly/RFID-KeyMaster.git /home/pi/RFID-KeyMaster
         # git clone https://github.com/Coding-Badly/RFID-KeyMaster.git /home/pi/RFID-KeyMaster
@@ -268,26 +287,14 @@ locales\tlocales/default_environment_locale\tselect\ten_US.UTF-8
         dm.mkdir(path_cache, parents=True)
         go_again = True
         csm.increment_current_step()
-    elif csm.get_current_step() == 15:
-        wall_and_print('Install PiFace Digital 2 packages from GitHub.', csm.get_current_step())
-        # Common
-        subprocess.run(['git','clone','git://github.com/piface/pifacecommon.git','/home/pi/pifacecommon'], check=True)
-        subprocess.run(['python3','/home/pi/pifacecommon/setup.py','install'], cwd='/home/pi/pifacecommon/', check=True)
-        subprocess.run(['rm','-rf','/home/pi/pifacecommon'], check=True)
-        # Digital I/O
-        subprocess.run(['git','clone','git://github.com/piface/pifacedigitalio.git','/home/pi/pifacedigitalio'], check=True)
-        subprocess.run(['python3','/home/pi/pifacedigitalio/setup.py','install'], cwd='/home/pi/pifacedigitalio/', check=True)
-        subprocess.run(['rm','-rf','/home/pi/pifacedigitalio'], check=True)
-        go_again = True
-        csm.increment_current_step()
-    elif csm.get_current_step() == 16:
+    elif csm.get_current_step() == 17:
         wall_and_print('Install PiFace Digital 2 initialization service.', csm.get_current_step())
         subprocess.run(['cp','/home/pi/RFID-KeyMaster/pi/init_PiFace_Digital_2.service','/etc/systemd/system/init_PiFace_Digital_2.service'], check=True)
         subprocess.run(['systemctl','enable','init_PiFace_Digital_2.service'], check=True)
         #go_again = True
         need_reboot = True
         csm.increment_current_step()
-    #elif csm.get_current_step() == 17:
+    #elif csm.get_current_step() == 18:
     #    wall_and_print('One last reboot for good measure.', csm.get_current_step())
     #    need_reboot = True
     #    csm.increment_current_step()
