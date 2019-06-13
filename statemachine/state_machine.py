@@ -26,7 +26,7 @@ from collections import deque
 from enum import IntEnum, auto
 import logging
 import sys
-from drivers.signals import Signals
+from statemachine.signals import Signals
 
 logger = logging.getLogger(__name__)
 

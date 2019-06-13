@@ -1,12 +1,10 @@
 """=============================================================================
 
-  Signals for RFID-KeyMaster.  This module contains all the signals used in the
-  KeyMaster application.  Signals are placed here instead of spread throughout
-  to make maintenance and documentation easier.
+  Signals for StateMachine.  This module contains the signals by the 
+  StateMachine class.
 
   ----------------------------------------------------------------------------
 
-  Copyright 2019 Mike Cole (aka @Draco, MikeColeGuru)
   Copyright 2019 Brian Cook (aka @Brian, Coding-Badly)
 
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,20 +27,6 @@ class Signals(IntEnum):
     INITIALIZE_STATE = auto()
     ENTER_STATE = auto()
     EXIT_STATE = auto()
-    STOP_NOW = auto()
-    LAST = auto()
-
-class KeyMasterSignals(IntEnum):
-    FIRST = Signals.LAST
-    CONTROL_TARGET = auto()
-    TARGET_ENGAGED = auto()
-    SWIPE_10 = auto()
-    FRESH_DATA = auto()
-    CACHED_DATA = auto()
-    USER_LOGGED_IN = auto()
-    USER_LOGGED_OUT = auto()
-    USER_LOGIN_FAILED = auto()
-    USER_AUTHORIZED = auto()
-    CURRENT_FLOWING = auto()
+    # fix STOP_NOW = auto()
     LAST = auto()
 

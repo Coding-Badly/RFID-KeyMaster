@@ -21,7 +21,7 @@ class Signals(IntEnum):
     INITIALIZE = auto()
     ENTER = auto()
     EXIT = auto()
-    FIRST_USER_DEFINED = auto()
+    LAST = auto()
 
 ################################################################################
 
@@ -33,7 +33,7 @@ Q_USER_SIG   = 10
 
 
 class KeyMasterSignals(IntEnum):
-    HARDWARE_CHANGED = Signals.FIRST_USER_DEFINED
+    HARDWARE_CHANGED = Signals.LAST
     SWIPE_10 = auto()
     FRESH_MEMBER_DATA = auto()
     CACHED_MEMBER_DATA = auto()
