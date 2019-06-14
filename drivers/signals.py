@@ -22,27 +22,25 @@
   limitations under the License.
 
 ============================================================================="""
-from enum import IntEnum, auto
+import enum
+from statemachine import Signals
 
-class Signals(IntEnum):
-    GET_SUPER_STATE = auto()
-    INITIALIZE_STATE = auto()
-    ENTER_STATE = auto()
-    EXIT_STATE = auto()
-    STOP_NOW = auto()
-    LAST = auto()
-
-class KeyMasterSignals(IntEnum):
+class DriverSignals(enum.IntEnum):
     FIRST = Signals.LAST
-    CONTROL_TARGET = auto()
-    TARGET_ENGAGED = auto()
-    SWIPE_10 = auto()
-    FRESH_DATA = auto()
-    CACHED_DATA = auto()
-    USER_LOGGED_IN = auto()
-    USER_LOGGED_OUT = auto()
-    USER_LOGIN_FAILED = auto()
-    USER_AUTHORIZED = auto()
-    CURRENT_FLOWING = auto()
-    LAST = auto()
+    STOP_NOW = enum.auto()
+    LAST = enum.auto()
+
+class KeyMasterSignals(enum.IntEnum):
+    FIRST = DriverSignals.LAST
+    CONTROL_TARGET = enum.auto()
+    TARGET_ENGAGED = enum.auto()
+    SWIPE_10 = enum.auto()
+    FRESH_DATA = enum.auto()
+    CACHED_DATA = enum.auto()
+    USER_LOGGED_IN = enum.auto()
+    USER_LOGGED_OUT = enum.auto()
+    USER_LOGIN_FAILED = enum.auto()
+    USER_AUTHORIZED = enum.auto()
+    CURRENT_FLOWING = enum.auto()
+    LAST = enum.auto()
 

@@ -1,33 +1,37 @@
-from enum import IntEnum, auto
+import enum
 import logging
 import pytest
-from drivers.state_machine import EVENT_ENTER_STATE, TopCannotBeTargetError, StateMachine, create_state_machine_events
 from drivers.signals import Signals, KeyMasterSignals
+from statemachine.signals import create_state_machine_events
+from statemachine.state_machine import (
+    EVENT_ENTER_STATE,
+    StateMachine, 
+    TopCannotBeTargetError)
 
 # cls & pytest tests/test_state_machine.py
 
 logger = logging.getLogger(__name__)
 
-class LocalTestSignals(IntEnum):
+class LocalTestSignals(enum.IntEnum):
     __test__ = False
     FIRST = KeyMasterSignals.FIRST
-    TEST_IDLE = auto()
-    TEST_1 = auto()
-    TEST_2 = auto()
-    TEST_3 = auto()
-    TEST_4 = auto()
-    TEST_5 = auto()
-    TEST_TO_TOP = auto()
-    TEST_TO_SELF = auto()
-    TEST_TO_SIBLING = auto()
-    TEST_TO_COUSIN = auto()
-    TEST_TO_PARENT = auto()
-    TEST_TO_CHILD = auto()
-    TEST_TO_GRANDPARENT = auto()
-    TEST_TO_GRANDCHILD = auto()
-    TEST_TO_DISTANT = auto()
-    TEST_TO_FINAL = auto()
-    LAST = auto()
+    TEST_IDLE = enum.auto()
+    TEST_1 = enum.auto()
+    TEST_2 = enum.auto()
+    TEST_3 = enum.auto()
+    TEST_4 = enum.auto()
+    TEST_5 = enum.auto()
+    TEST_TO_TOP = enum.auto()
+    TEST_TO_SELF = enum.auto()
+    TEST_TO_SIBLING = enum.auto()
+    TEST_TO_COUSIN = enum.auto()
+    TEST_TO_PARENT = enum.auto()
+    TEST_TO_CHILD = enum.auto()
+    TEST_TO_GRANDPARENT = enum.auto()
+    TEST_TO_GRANDCHILD = enum.auto()
+    TEST_TO_DISTANT = enum.auto()
+    TEST_TO_FINAL = enum.auto()
+    LAST = enum.auto()
 
 create_state_machine_events(LocalTestSignals, __name__)
 

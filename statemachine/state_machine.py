@@ -22,22 +22,15 @@
 
 ============================================================================="""
 import abc
-from collections import deque
-from enum import IntEnum, auto
+import collections
+import enum
 import logging
-import sys
-from statemachine.signals import Signals
+from statemachine.signals import (
+    create_state_machine_events, 
+    Signals, 
+    StateMachineEvent)
 
 logger = logging.getLogger(__name__)
-
-"""rmv
-class Signals(IntEnum):
-    GET_SUPER_STATE = auto()
-    INITIALIZE_STATE = auto()
-    ENTER_STATE = auto()
-    EXIT_STATE = auto()
-    STOP_NOW = auto()
-"""
 
 class MalformedStateMachineError(Exception):
     pass
@@ -48,35 +41,11 @@ class TopCannotBeTargetError(MalformedStateMachineError):
 class InvalidInternalStateInInitializeError(MalformedStateMachineError):
     pass
 
-class StateMachineEvent():
-    def __init__(self, signal, name=None):
-        self.signal = signal
-        self.name = name
-    def __str__(self):
-        if self.name:
-            return self.name
-        else:
-            return str(self.signal)
-    def __eq__(self, other):
-        if isinstance(other, IntEnum):
-            return other.value == self.signal
-        else:
-            return super().__eq__(other)
-
-def create_state_machine_events(an_enum, module_name=None):
-    if module_name is None:
-        module_name = __name__
-    module = sys.modules[module_name]
-    for e1 in an_enum:
-        gn = 'EVENT_' + e1.name
-        gv = StateMachineEvent(e1.value, e1.name)
-        setattr(module, gn, gv)
-
-create_state_machine_events(Signals)
+create_state_machine_events(Signals, __name__)
 
 class StateMachine(abc.ABC):
     def __init__(self):
-        self._waiting_signals = deque()
+        self._waiting_signals = collections.deque()
         self._first_run = True
         self._path_to_top = dict()
         # fix: Don't bother storing _initial

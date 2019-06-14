@@ -27,7 +27,7 @@
 ============================================================================="""
 from collections import defaultdict, OrderedDict
 # rmv from drivers import Signals
-from drivers.signals import Signals
+from drivers.signals import DriverSignals
 from threading import Thread, Event
 from exceptions import DriverWontStartError, LeftOverEdgesError
 from exceptions.RequiredDriverException import RequiredDriverException
@@ -501,7 +501,7 @@ class DriverBase(Thread, Dispatcher):
         self._event_queue.setup()
         self._timelets = list()
         self._open_for_business = Event()
-        self.subscribe(None, Signals.STOP_NOW, self._stop_now, raise_on_not_found=False, skip_self=False)
+        self.subscribe(None, DriverSignals.STOP_NOW, self._stop_now, raise_on_not_found=False, skip_self=False)
 
     def startup(self):
         self._keep_running = self._ok_to_start
@@ -544,15 +544,15 @@ class DriverBase(Thread, Dispatcher):
             os._exit(42) # Make sure entire application exits
 
 class DeathOfRats(DriverBase):
-    _events_ = [Signals.STOP_NOW]
+    _events_ = [DriverSignals.STOP_NOW]
     def startup(self):
         super().startup()
         self.open_for_business()
     def stop_all(self):
-        self.publish(Signals.STOP_NOW)
+        self.publish(DriverSignals.STOP_NOW)
     def shutdown(self):
         super().shutdown()
-        self.publish(Signals.STOP_NOW)
+        self.publish(DriverSignals.STOP_NOW)
 
 # rmv class DriverBaseOld(DriverBase):
 # rmv     def __init__(self, config, loader, id):

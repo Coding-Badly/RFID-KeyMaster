@@ -20,13 +20,36 @@
   limitations under the License.
 
 ============================================================================="""
-from enum import IntEnum, auto
+import enum
+import sys
 
-class Signals(IntEnum):
-    GET_SUPER_STATE = auto()
-    INITIALIZE_STATE = auto()
-    ENTER_STATE = auto()
-    EXIT_STATE = auto()
-    # fix STOP_NOW = auto()
-    LAST = auto()
+class Signals(enum.IntEnum):
+    GET_SUPER_STATE = enum.auto()
+    INITIALIZE_STATE = enum.auto()
+    ENTER_STATE = enum.auto()
+    EXIT_STATE = enum.auto()
+    # fix STOP_NOW = enum.auto()
+    LAST = enum.auto()
+
+class StateMachineEvent():
+    def __init__(self, signal, name=None):
+        self.signal = signal
+        self.name = name
+    def __str__(self):
+        if self.name:
+            return self.name
+        else:
+            return str(self.signal)
+    def __eq__(self, other):
+        if isinstance(other, enum.IntEnum):
+            return other.value == self.signal
+        else:
+            return super().__eq__(other)
+
+def create_state_machine_events(an_enum, module_name):
+    module = sys.modules[module_name]
+    for e1 in an_enum:
+        gn = 'EVENT_' + e1.name
+        gv = StateMachineEvent(e1.value, e1.name)
+        setattr(module, gn, gv)
 
