@@ -240,7 +240,7 @@ class DriverTimelet():
     def __init__(self, payload, first_due):
         self._payload = payload
         self._when_due = first_due
-    # fix? active? enabled?
+        self._enabled = True
     def expired(self):
         return False
     @property
@@ -261,6 +261,8 @@ class DriverTimelet():
         return self._when_due == other._when_due
     def __ne__(self, other):
         return self._when_due != other._when_due
+    def disable(self):
+        self._enabled = False
 
 class DriverTimeletInterval(DriverTimelet):
     def __init__(self, payload, every, fire_now=False):
@@ -438,6 +440,7 @@ class DriverBase(Thread, Dispatcher):
         event = DriverEvent(method, args, kwargs)
         timelet = DriverTimelet(event, monotonic()+after)
         heapq.heappush(self._timelets, timelet)
+        return timelet
 
     def call_every(self, every, method, *args, **kwargs):
         event = DriverEvent(method, args, kwargs)
@@ -448,6 +451,7 @@ class DriverBase(Thread, Dispatcher):
             fire_now = False
         timelet = DriverTimeletInterval(event, every, fire_now)
         heapq.heappush(self._timelets, timelet)
+        return timelet
 
     def register(self, fileobj, events, data=None):
         self._event_queue.register(fileobj, events, data)
@@ -475,9 +479,10 @@ class DriverBase(Thread, Dispatcher):
                     break
                 else:
                     timelet = heapq.heappop(self._timelets)
-                    self._event_queue.put(timelet.payload)
-                    if timelet.expired():
-                        heapq.heappush(self._timelets, timelet)
+                    if timelet._enabled:
+                        self._event_queue.put(timelet.payload)
+                        if timelet.expired():
+                            heapq.heappush(self._timelets, timelet)
             try:
                 event = self._event_queue.get(block=True, timeout=timeout)
                 event.id(*event.args, **event.kwargs)

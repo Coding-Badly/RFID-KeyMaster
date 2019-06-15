@@ -28,7 +28,7 @@ class Signals(enum.IntEnum):
     INITIALIZE_STATE = enum.auto()
     ENTER_STATE = enum.auto()
     EXIT_STATE = enum.auto()
-    # fix STOP_NOW = enum.auto()
+    TIMEOUT = enum.auto()
     LAST = enum.auto()
 
 class StateMachineEvent():

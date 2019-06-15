@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 #pifacedigitalio.core.init()
 
 class PiFaceDigital2Relays(DriverBase):
-    _events_ = [KeyMasterSignals.TARGET_ENGAGED]
+    _events_ = [KeyMasterSignals.RELAY_CLOSED]
     def setup(self):
         super().setup()
         group_number = int(self.config.get('group_number', 0))
@@ -50,19 +50,19 @@ class PiFaceDigital2Relays(DriverBase):
         # Turn off Interrupts
         # rmv? pifacedigitalio.core.deinit()
         self._pifacedigital = pifacedigitalio.PiFaceDigital(init_board=init_board)
-        self.subscribe(None, KeyMasterSignals.CONTROL_TARGET, self._receive_control_target)
+        self.subscribe(None, KeyMasterSignals.CONTROL_RELAY, self._receive_control_relay)
         # rmv atexit.register(self.reset_piface)
         #return False
-    def _publish_target_state(self):
-        self.publish(KeyMasterSignals.TARGET_ENGAGED, bool(self._pifacedigital.relays[self._relay].value))
+    def _publish_relay_state(self):
+        self.publish(KeyMasterSignals.RELAY_CLOSED, bool(self._pifacedigital.relays[self._relay].value))
     def startup(self):
         super().startup()
-        self._publish_target_state()
+        self._publish_relay_state()
         self.open_for_business()
-    def _receive_control_target(self, data):
+    def _receive_control_relay(self, data):
         new_value = int(data)
         self._pifacedigital.relays[self._relay].value = new_value
-        self._publish_target_state()
+        self._publish_relay_state()
         logger.info('relay set to = {}'.format(new_value))
     def shutdown(self):
         super().shutdown()

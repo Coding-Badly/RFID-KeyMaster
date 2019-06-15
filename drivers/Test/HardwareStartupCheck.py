@@ -32,17 +32,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 class HardwareStartupCheck(DriverBase):
-    _events_ = [KeyMasterSignals.CONTROL_TARGET]
+    _events_ = [KeyMasterSignals.CONTROL_RELAY]
     def _after_init(self):
         super()._after_init()
         self.current_was_flowing = None
-        self.target_was_engaged = None
+        self.relay_was_closed = None
     def setup(self):
         super().setup()
         self.expected_current_was_flowing = self.config.get('expected_current_was_flowing', None)
-        self.expected_target_was_engaged = self.config.get('expected_target_was_engaged', None)
+        self.expected_relay_was_closed = self.config.get('expected_relay_was_closed', None)
         self.subscribe(None, KeyMasterSignals.CURRENT_FLOWING, self._receive_current_flowing)
-        self.subscribe(None, KeyMasterSignals.TARGET_ENGAGED, self._receive_target_engaged, determines_start_order=False)
+        self.subscribe(None, KeyMasterSignals.RELAY_CLOSED, self._receive_relay_closed, determines_start_order=False)
     def startup(self):
         super().startup()
         self.call_after(0.10, self._finished)
@@ -52,10 +52,10 @@ class HardwareStartupCheck(DriverBase):
         if self.current_was_flowing is None:
             self.current_was_flowing = current_flowing
         logger.info('receive_current_flowing / current_flowing = {}'.format(current_flowing))
-    def _receive_target_engaged(self, target_engaged):
-        if self.target_was_engaged is None:
-            self.target_was_engaged = target_engaged
-        logger.info('receive_target_engaged / target_engaged = {}'.format(target_engaged))
+    def _receive_relay_closed(self, relay_closed):
+        if self.relay_was_closed is None:
+            self.relay_was_closed = relay_closed
+        logger.info('receive_relay_closed / relay_closed = {}'.format(relay_closed))
     def _finished(self):
         dor = self.find_driver_by_name('DeathOfRats', True)
         if dor:
@@ -63,6 +63,6 @@ class HardwareStartupCheck(DriverBase):
     def teardown(self):
         if self.expected_current_was_flowing is not None:
             assert self.expected_current_was_flowing == self.current_was_flowing
-        if self.expected_target_was_engaged is not None:
-            assert self.expected_target_was_engaged == self.target_was_engaged
+        if self.expected_relay_was_closed is not None:
+            assert self.expected_relay_was_closed == self.relay_was_closed
 

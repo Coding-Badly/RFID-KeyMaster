@@ -32,8 +32,8 @@ class DriverSignals(enum.IntEnum):
 
 class KeyMasterSignals(enum.IntEnum):
     FIRST = DriverSignals.LAST
-    CONTROL_TARGET = enum.auto()
-    TARGET_ENGAGED = enum.auto()
+    CONTROL_RELAY = enum.auto()
+    RELAY_CLOSED = enum.auto()
     SWIPE_10 = enum.auto()
     FRESH_DATA = enum.auto()
     CACHED_DATA = enum.auto()

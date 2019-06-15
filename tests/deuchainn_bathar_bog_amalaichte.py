@@ -136,7 +136,7 @@ def raw_config_003():
         {
             "driver": "HardwareStartupCheck",
             "expected_current_was_flowing": false,
-            "expected_target_was_engaged": false
+            "expected_relay_was_closed": false
         },
         {
             "driver": "PiFaceDigital2Relays",
@@ -154,17 +154,17 @@ def pause_test(pytestconfig, text):
     j1 = input(text)
     capmanager.resume_global_capture()
 
-def run_one(pytestconfig, raw_config, expected_current_was_flowing, expected_target_was_engaged):
+def run_one(pytestconfig, raw_config, expected_current_was_flowing, expected_relay_was_closed):
     if expected_current_was_flowing:
         pause_test(pytestconfig, "Hold S3 then press Enter...")
     else:
         pause_test(pytestconfig, "Release S3 then press Enter...")
     _pifacedigital = pifacedigitalio.PiFaceDigital(init_board=False)
-    _pifacedigital.relays[0].value = expected_target_was_engaged
+    _pifacedigital.relays[0].value = expected_relay_was_closed
     try:
         tm1 = LoadableDriverBuilder(Configuration(raw_config))
         raw_config['primary'][2]['expected_current_was_flowing'] = expected_current_was_flowing
-        raw_config['primary'][2]['expected_target_was_engaged'] = expected_target_was_engaged
+        raw_config['primary'][2]['expected_relay_was_closed'] = expected_relay_was_closed
         root = tm1.build()
         root.setup()
         root.start()

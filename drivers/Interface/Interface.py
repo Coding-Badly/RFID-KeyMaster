@@ -1,7 +1,7 @@
 """=============================================================================
 
   Interface for RFID-KeyMaster.  Interface contains things common to all 
-  drivers that control power to the target, receive input from a pushbutton,
+  drivers that control power to the relay, receive input from a pushbutton,
   and drive an LED.
 
   ----------------------------------------------------------------------------
@@ -25,5 +25,4 @@
 from drivers.DriverBase import DriverBase
 
 class Interface(DriverBase):
-    # rmv CONTROL_TARGET = 'control_target'
     pass

@@ -30,17 +30,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 class PowerController(DriverBase):
-    _events_ = [KeyMasterSignals.CONTROL_TARGET]
+    _events_ = [KeyMasterSignals.CONTROL_RELAY]
     def setup(self):
         super().setup()
         self._power_permission = Permission('power')
         self._current_user = None
-        self._target_state = None
+        self._relay_state = None
         self._state = self._state_init_0
         # fix self.subscribe(None, KeyMasterSignals.USER_AUTHORIZED, self.receive_user_authorized)
         # fix self.subscribe(None, KeyMasterSignals.USER_LOGIN_FAILED, self.receive_user_login_failed)
         self.subscribe(None, KeyMasterSignals.CURRENT_FLOWING, self._receive_current_flowing)
-        self.subscribe(None, KeyMasterSignals.TARGET_ENGAGED, self.receive_target_engaged, determines_start_order=False)
+        self.subscribe(None, KeyMasterSignals.RELAY_CLOSED, self.receive_relay_closed, determines_start_order=False)
     def startup(self):
         super().startup()
         self.open_for_business()
@@ -56,31 +56,31 @@ class PowerController(DriverBase):
         logger.warning('Unhandled signal in {}: {}, {}, {}'.format(self._state, signal, args, kwargs))
     def _state_init_0_no_current(self, signal, *args, **kwargs):
         logger.warning('Unhandled signal in {}: {}, {}, {}'.format(self._state, signal, args, kwargs))
-    def _control_target(self, new_state):
+    def _control_relay(self, new_state):
         new_value = 1 if new_state else 0
-        self.publish(KeyMasterSignals.CONTROL_TARGET, new_value)
-        self._target_state = new_state
+        self.publish(KeyMasterSignals.CONTROL_RELAY, new_value)
+        self._relay_state = new_state
     def receive_user_authorized(self, data):
         if data.authorized and (self._power_permission in data.effective_rights):
             # Log an info
             self._current_user = data
             # Power on!
-            self._control_target(True)
+            self._control_relay(True)
         else:
             # Log a warning.
             self._current_user = None
-            self._control_target(False)
+            self._control_relay(False)
     def receive_user_login_failed(self, data):
         # Power off!
         # Issue a warning.
         # Don't power off if current is flowing?
         # Issue a warning if current is flowing?
         self._current_user = None
-        self._control_target(False)
+        self._control_relay(False)
     def _receive_current_flowing(self, *args, **kwargs):
         logger.info('receive_current_flowing / current_flowing = {}'.format(args[0]))
         self._state(KeyMasterSignals.CURRENT_FLOWING, *args, **kwargs)
-    def receive_target_engaged(self, target_engaged):
-        logger.info('receive_target_engaged / target_engaged = {}'.format(target_engaged))
-        # fix self._state(KeyMasterSignals.TARGET_ENGAGED, target_engaged)
+    def receive_relay_closed(self, relay_closed):
+        logger.info('receive_relay_closed / relay_closed = {}'.format(relay_closed))
+        # fix self._state(KeyMasterSignals.RELAY_CLOSED, relay_closed)
 
