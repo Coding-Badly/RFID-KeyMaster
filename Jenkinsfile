@@ -3,8 +3,14 @@ pipeline {
     stages {
         stage('build') {
             steps {
-                sh 'python3 --version'
+                sh 'pip3 install -r requirements.txt'
+                sh 'pip3 install pytest'
             }
+        }
+        stage('test') {
+            steps {
+                sh 'pytest'
+            }   
         }
     }
 }
