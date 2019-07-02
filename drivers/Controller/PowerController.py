@@ -24,7 +24,7 @@
 ============================================================================="""
 from drivers.signals import KeyMasterSignals
 from drivers.DriverBase import DriverBase
-from utils.SecurityContext import Permission
+from utils.securitycontext import Permission
 import logging
 
 logger = logging.getLogger(__name__)

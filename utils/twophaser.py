@@ -1,6 +1,6 @@
 """=============================================================================
 
-  TwoPhaser for RFID-KeyMaster.  TwoPhaser provides a Context Manager 
+  TwoPhaser for RFID-KeyMaster.  TwoPhaser provides a Context Manager
   (with-statement) that performs a two-phase commit when writing to a file.
   The goal is to as reliably as possible maintain a persistent cache.  In the
   case of RFID-KeyMaster, the cache contains ActiveDirectory account and group
@@ -99,10 +99,38 @@ import pathlib
 logger = logging.getLogger(__name__)
 
 class TwoPhaser:
+    """Context manager that performs a two-phase commit over an otherwise normal file.
+
+    TwoPhaser is a context manager that...
+    • Is essentially a helper for two_phase_open.
+    • Probes to determine if the target file will be writable.
+    • Tries to recover if a failure is detected from the previous open.
+
+    When reading...
+    • Uses a backup file, if available, when the file is opened for reading
+        and the primary does not exist.
+    • Reads from the primary if the file is opened for reading and the
+        primary does exist.
+    • Simply closes the file if it was opened for reading.
+
+    When writing...
+    • Writes to a temporary file if the file is opened for writing
+    • On commit (no exception raised) closes the temporary file, deletes the
+        backup if it exists, renames the primary to be the new backup, renames
+        the temporary to be the new primary.
+    • On rollback (exception raised) closes the temporary file then deletes
+        the temporary file.
+    """
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, args, kwargs):
-        self._file = None
         self._args = args
         self._kwargs = kwargs
+        self._file = None
+        self._primary_path = None
+        self._backup_path = None
+        self._writable = None
+        self._temporary_path = None
+        self._writable_actual = None
     def __enter__(self):
         logger.debug("%s.__enter__()", self)
         # Prepare arguments for calling open
@@ -135,7 +163,8 @@ class TwoPhaser:
         else:
             if self._backup_path.exists() and not self._primary_path.exists():
                 path_to_use = self._backup_path
-                logger.warning("Backup file %s exists with no primary.  Reading from the backup file.", self._backup_path)
+                logger.warning("Backup file %s exists with no primary.  " \
+                        "Reading from the backup file.", self._backup_path)
             else:
                 path_to_use = self._primary_path
         # Ready for business.
@@ -170,7 +199,8 @@ class TwoPhaser:
     def _recover(self):
         logger.debug("%s._recover()", self)
         if self._temporary_path.exists():
-            logger.warning("Temporary file %s exists.  Recovery from a failure is necessary.", self._temporary_path)
+            logger.warning("Temporary file %s exists.  " \
+                    "Recovery from a failure is necessary.", self._temporary_path)
             if self._primary_path.exists():
                 logger.warning("Failure at or before 1b.  Removing the temporary file.")
                 self._safe_delete(self._temporary_path)
@@ -179,19 +209,23 @@ class TwoPhaser:
                     logger.warning("Failure between 1d and 2.  Rolling forward.")
                     self._safe_rename(self._temporary_path, self._primary_path)
                 else:
-                    logger.warning("The first primary has not yet been created.  Removing the temporary file.")
+                    logger.warning("The first primary has not yet been created.  " \
+                            "Removing the temporary file.")
                     self._safe_delete(self._temporary_path)
         #elif self._backup_path.exists() and not self._primary_path.exists():
-        #    logger.warning("Backup file %s exists with no primary: recovery from a failure is necessary.", self._backup_path)
+        #    logger.warning("Backup file %s exists with no primary: " \
+        #            "recovery from a failure is necessary.", self._backup_path)
         #    logger.warning("Backup renamed to become the primary.")
         #    self._safe_rename(self._backup_path, self._primary_path)
-    def _safe_delete(self, path):
+    @staticmethod
+    def _safe_delete(path):
         try:
             logger.debug("Delete %s", path)
             path.unlink()
         except FileNotFoundError:
             pass
-    def _safe_rename(self, path_from, path_to):
+    @staticmethod
+    def _safe_rename(path_from, path_to):
         try:
             logger.debug("Rename %s to %s", path_from, path_to)
             path_from.rename(path_to)
@@ -201,15 +235,15 @@ class TwoPhaser:
 def two_phase_open(*args, **kwargs):
     """Drop in replacement for the Python open function that performs a
     two-phase commit for writable files.
-    
+
     Args:
         The arguments are essentially identical to those for the open function.
-    
+
     Notes:
         To work correctly this function has to be used with a with-statement.
-    
+
     Raises:
-        WritableMismatchError: An internal check that indicates the code 
+        WritableMismatchError: An internal check that indicates the code
             failed to correctly determine is-writable.
         Various I/O exceptions.
 

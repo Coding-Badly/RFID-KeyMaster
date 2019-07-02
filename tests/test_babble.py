@@ -76,7 +76,7 @@ def test_build_employee_id_babble(caplog, employee_ids, shared_data_path):
     tm3.add_filter(BabblerFilterDontUseThese(employee_ids))
     tm4 = BabblerFilterMatchHistogram()
     tm3.add_filter(tm4)
-    tm3.process(employee_ids)
+    tm3.analyze(employee_ids)
     if tm3.usable():
         dump_histogram(tm3._makes_words._target_histogram)
         for i1 in range(100000):
@@ -162,7 +162,7 @@ def x_test_first_name_babble(caplog, each_gender):
     tm3.add_filter(BabblerFilterDontUseThese(each_gender))
     tm4 = BabblerFilterMatchHistogram()
     tm3.add_filter(tm4)
-    tm3.process(each_gender)
+    tm3.analyze(each_gender)
     dump_histogram(tm3._makes_words._target_histogram)
     for i1 in range(100000):
         word = tm3.babble()
@@ -212,7 +212,7 @@ def x_test_last_name_babble(caplog, last_names):
     tm3.add_filter(BabblerFilterDontUseThese(last_names))
     tm4 = BabblerFilterMatchHistogram()
     tm3.add_filter(tm4)
-    tm3.process(last_names)
+    tm3.analyze(last_names)
     dump_histogram(tm3._makes_words._target_histogram)
     for i1 in range(100000):
         word = tm3.babble()
@@ -266,7 +266,7 @@ def x_test_generate_all_group_combinations(caplog):
 def x_test_WordSequence_001(caplog):
     caplog.set_level(logging.INFO)
     tm1 = FilteredBabbler(WordSequence())
-    tm1.process(generate_all_group_combinations())
+    tm1.analyze(generate_all_group_combinations())
     for i1 in range(10):
         rv1 = tm1.babble()
         rv1.add('Members')
@@ -328,7 +328,7 @@ def x_test_003(caplog):
     tm3.add_filter(BabblerFilterDontUseThese(girls))
     tm4 = BabblerFilterMatchHistogram()
     tm3.add_filter(tm4)
-    tm3.process(girls)
+    tm3.analyze(girls)
     dump_histogram(tm3._makes_words._target_histogram)
     #for i1 in range(100000):
     #    word = tm3.babble()

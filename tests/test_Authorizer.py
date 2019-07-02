@@ -26,7 +26,7 @@ from drivers.Auth.Authorizer import Authorizer
 from drivers.Auth.Authenticator import AuthenticatorData
 from drivers.DriverBase import DriverGroup, DriverBase
 from drivers.Test.RunForSeconds import RunForSeconds
-from utils.SecurityContext import Permission
+from utils.securitycontext import Permission
 import json
 import logging
 from time import monotonic

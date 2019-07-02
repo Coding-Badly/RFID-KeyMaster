@@ -1,6 +1,6 @@
 """=============================================================================
 
-  insulation_linux for RFID-KeyMaster.  insulation_linux provides insulation 
+  insulation_linux for RFID-KeyMaster.  insulation_linux provides insulation
   from the Linux operating system.  While Python is highly  portable it is not
   perfect.  The location of files is a good example.  RFID-KeyMaster needs to
   cache data.  The application directory is not an appropriate location.  Each
@@ -28,12 +28,17 @@
 ============================================================================="""
 import pathlib
 
-_cache_path = None
+CACHE_PATH = None
 
 def get_cache_path():
-    global _cache_path
-    if _cache_path is None:
-        _cache_path = pathlib.Path('/var/cache/Dallas Makerspace/RFID-KeyMaster')
-        _cache_path.mkdir(mode=0o755, parents=True, exist_ok=True)
-    return _cache_path
+    """Return a Path to the cache directory for the RFID-KeyMaster application.
 
+    This function also ensures the cache directory exists and has reasonable
+    permissions.
+    """
+    # pylint: disable=global-statement
+    global CACHE_PATH
+    if CACHE_PATH is None:
+        CACHE_PATH = pathlib.Path('/var/cache/Dallas Makerspace/RFID-KeyMaster')
+        CACHE_PATH.mkdir(mode=0o755, parents=True, exist_ok=True)
+    return CACHE_PATH

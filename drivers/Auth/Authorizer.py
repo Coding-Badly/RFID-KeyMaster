@@ -22,7 +22,7 @@
 ============================================================================="""
 from drivers.signals import KeyMasterSignals
 from drivers.DriverBase import DriverBase
-from utils.SecurityContext import SecurityContext
+from utils.securitycontext import SecurityContext
 import logging
 
 logger = logging.getLogger(__name__)

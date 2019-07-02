@@ -20,7 +20,7 @@
   limitations under the License.
 
 ============================================================================="""
-from utils.SecurityContext import Permission, Group, SecurityContext
+from utils.securitycontext import Permission, Group, SecurityContext
 import logging
 
 logger = logging.getLogger(__name__)

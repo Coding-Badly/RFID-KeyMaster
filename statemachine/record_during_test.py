@@ -1,7 +1,6 @@
 """=============================================================================
 
-  As a convenience import the most commonly used things (flatten) when the
-  developer imports the package.
+  Decorator that records a state processing an event.
 
   ----------------------------------------------------------------------------
 
@@ -20,14 +19,29 @@
   limitations under the License.
 
 ============================================================================="""
+import sys
+from statemachine.signals import Signals
 
-from statemachine.signals import (
-    Signals,
-    StateMachineEvent)
+RECORDING = "pytest" in sys.modules
 
-from statemachine.state_machine import (
-    create_state_machine_events,
-    StateMachine)
+def record_during_test(f):
+    def wrapper(*args, **kwargs):
+        event = args[1]
+        if event != Signals.GET_SUPER_STATE:
+            self = args[0]
+            name = f.__name__
+            re1 = getattr(self, '_recording', None)
+            if re1 is None:
+                re1 = list()
+                self._recording = re1
+            s1 = self._state.__func__.__name__
+            re1.append((name, args[1], s1))
+            lo1 = getattr(self, '_logger', None)
+            if lo1 is not None:
+                lo1.info('{:<25s}- {}'.format(name, event, s1))
+        rv = f(*args, **kwargs)
+        return rv
+    if RECORDING:
+        return wrapper
+    return f
 
-from statemachine.record_during_test import (
-    record_during_test)
