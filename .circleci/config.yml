@@ -13,3 +13,12 @@ jobs:
             cd ~/python-dispatch
             sudo python3 setup.py install
             cd ~/RFID-KeyMaster
+            sudo rm -rf ~/python-dispatch
+      - checkout
+      - run: sudo pip install -r requirements.txt
+      - run: mkdir ~/test-results
+      - run: pytest --junitxml=~/test-results/junit.xml
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results
