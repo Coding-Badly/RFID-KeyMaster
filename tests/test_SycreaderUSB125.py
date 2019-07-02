@@ -21,6 +21,10 @@
 ============================================================================="""
 import platform
 import pytest
+import tests.exercise as exercise
+
+if not exercise.rfid_readers:
+    pytest.skip("skipping RFID reader tests", allow_module_level=True)
 
 if platform.system() == 'Windows':
     pytest.skip("skipping tests that will not run on Windows", allow_module_level=True)
