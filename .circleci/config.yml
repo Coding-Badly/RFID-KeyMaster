@@ -1,14 +1,16 @@
 version: 2
 jobs:
   build:
-    # working_directory: ~/RFID-KeyMaster
     docker:
       - image: circleci/python:3.6.4  # fix
+    working_directory: ~/junk
     steps:
       - run: sudo pip install --upgrade pip
       - run: git clone https://github.com/Coding-Badly/python-dispatch.git
       - run: sudo python3 ./python-dispatch/setup.py install
       - run: rm -rf ./python-dispatch
+    working_directory: ~/RFID-KeyMaster
+    steps:
       - checkout
       - run: sudo pip install -r requirements.txt
   test:
