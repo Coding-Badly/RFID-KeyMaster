@@ -7,4 +7,6 @@ jobs:
     steps:
       - run: sudo pip install --upgrade pip
       - run: git clone https://github.com/Coding-Badly/python-dispatch.git ~/python-dispatch
+      - run: cd ~/python-dispatch  # setup.py for this package uses the current working directory.
       - run: sudo python3 ~/python-dispatch/setup.py install
+      - run: cd ~/RFID-KeyMaster
