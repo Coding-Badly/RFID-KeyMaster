@@ -1,7 +1,7 @@
 """=============================================================================
 
   pytest for PiFaceDigital2Relays.
-  
+
   ----------------------------------------------------------------------------
 
   Copyright 2019 Brian Cook (aka Coding-Badly)
@@ -21,6 +21,10 @@
 ============================================================================="""
 import platform
 import pytest
+import tests.exercise as exercise
+
+if not exercise.piface_relays:
+    pytest.skip("skipping relay tests", allow_module_level=True)
 
 if platform.system() == 'Windows':
     pytest.skip("skipping tests that will not run on Windows", allow_module_level=True)

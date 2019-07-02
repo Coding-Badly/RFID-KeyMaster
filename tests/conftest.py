@@ -21,6 +21,7 @@
 ============================================================================="""
 from pathlib import Path
 import pytest
+import tests.exercise as exercise
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -65,4 +66,14 @@ def exercise_rfid_readers(request, exercise_hardware):
     rv = exercise_hardware or \
         request.config.getoption("--exercise_rfid_readers")
     return rv
+
+def pytest_configure(config):
+    if config.getoption("--exercise_hardware"):
+        exercise.piface_relays = True
+        exercise.rfid_readers = True
+        exercise.hardware = True
+    elif config.getoption("--exercise_piface_relays"):
+        exercise.piface_relays = True
+    elif config.getoption("--exercise_rfid_readers"):
+        exercise.rfid_readers = True
 
