@@ -6,3 +6,5 @@ jobs:
       - image: circleci/python:3.6.4  # fix
     steps:
       - checkout
+      - pip install --upgrade pip
+      - pip install -r requirements.txt
