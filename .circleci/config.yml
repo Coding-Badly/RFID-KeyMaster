@@ -5,8 +5,11 @@ jobs:
       - image: circleci/python:3.6.4  # fix
     working_directory: ~/RFID-KeyMaster
     steps:
-      - run: sudo pip install --upgrade pip
-      - run: git clone https://github.com/Coding-Badly/python-dispatch.git ~/python-dispatch
-      - run: cd ~/python-dispatch  # setup.py for this package uses the current working directory.
-      - run: sudo python3 ~/python-dispatch/setup.py install
-      - run: cd ~/RFID-KeyMaster
+      - run:
+          name: Prepare Python things that are troublesome.
+          command: |
+            sudo pip install --upgrade pip
+            git clone https://github.com/Coding-Badly/python-dispatch.git ~/python-dispatch
+            cd ~/python-dispatch
+            sudo python3 setup.py install
+            cd ~/RFID-KeyMaster
