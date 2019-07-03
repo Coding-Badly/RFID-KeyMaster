@@ -5,7 +5,7 @@ jobs:
       - image: circleci/python:3.6.4  # fix
     working_directory: ~/RFID-KeyMaster
     steps:
-      - run: sudo mkdir '/var/cache/Dallas Makerspace/RFID-KeyMaster'
+      - run: sudo mkdir -p '/var/cache/Dallas Makerspace/RFID-KeyMaster'
       - run: sudo chmod 755 '/var/cache/Dallas Makerspace/RFID-KeyMaster'
       - run: sudo pip install --upgrade pip
       - checkout
