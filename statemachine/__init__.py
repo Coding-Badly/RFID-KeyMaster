@@ -30,4 +30,5 @@ from statemachine.state_machine import (
     StateMachine)
 
 from statemachine.record_during_test import (
+    log_during_test,
     record_during_test)
