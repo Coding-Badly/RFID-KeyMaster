@@ -23,7 +23,7 @@
 
 ============================================================================="""
 import enum
-from statemachine import Signals
+from statemachine import Signals, StateMachineEvent
 
 class DriverSignals(enum.IntEnum):
     FIRST = Signals.LAST
@@ -41,6 +41,23 @@ class KeyMasterSignals(enum.IntEnum):
     USER_LOGGED_OUT = enum.auto()
     USER_LOGIN_FAILED = enum.auto()
     USER_AUTHORIZED = enum.auto()
+    USER_FINISHED = enum.auto()
+    USER_DENIED = enum.auto()
     CURRENT_FLOWING = enum.auto()
     LAST = enum.auto()
+
+class UserAuthorizedEvent(StateMachineEvent):
+    def __init__(self, id):
+        super().__init__(KeyMasterSignals.USER_AUTHORIZED, None)
+        self.id = id
+
+class UserDeniedEvent(StateMachineEvent):
+    def __init__(self, id):
+        super().__init__(KeyMasterSignals.USER_DENIED, None)
+        self.id = id
+
+class UserFinishedEvent(StateMachineEvent):
+    def __init__(self, id):
+        super().__init__(KeyMasterSignals.USER_FINISHED, None)
+        self.id = id
 

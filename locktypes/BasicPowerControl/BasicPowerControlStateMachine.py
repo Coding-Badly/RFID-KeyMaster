@@ -21,11 +21,10 @@
 ============================================================================="""
 import enum
 import logging
-from drivers.signals import Signals, KeyMasterSignals
-import statemachine
-from statemachine import log_during_test, record_during_test
+from drivers.signals import Signals, KeyMasterSignals, UserFinishedEvent
+from statemachine import log_during_test, record_during_test, StateMachine, StateMachineEvent
 
-logger = logging.getLogger(__name__)
+# rmv logger = logging.getLogger(__name__)
 
 class PowerControlSignals(enum.IntEnum):
     FIRST = KeyMasterSignals.LAST
@@ -50,15 +49,16 @@ class PowerControlObserver():
         log_during_test(self._subject, 'post a timeout in {} seconds'.format(seconds))
     def stop_timeout_timer(self):
         log_during_test(self._subject, 'cancel the timeout request')
+    def log(lvl, msg, *args, **kwargs):
+        # fix: log_during_test
+        pass
 
-class BasicPowerControlStateMachine(statemachine.StateMachine):
+class BasicPowerControlStateMachine(StateMachine):
     def _after_init(self):
         super()._after_init()
         self.current_is_flowing = None
         self.relay_is_closed = None
         self._observer = PowerControlObserver(self)
-        # rmv self._recording = list()
-        # rmv self._logger = logger
         self._active_member_id = None
         self._pending_member_id = None
     def _get_initial_state(self):
@@ -82,11 +82,6 @@ class BasicPowerControlStateMachine(statemachine.StateMachine):
                     self.process(PowerControlSignals.OPEN_FLOW)
                 else:
                     self.process(PowerControlSignals.OPEN_NONE)
-    # rmv def _record(self, name, event):
-    # rmv     if event != Signals.GET_SUPER_STATE:
-    # rmv         s1 = self._state.__func__.__name__
-    # rmv         self._recording.append((name, event, s1))
-    # rmv         logger.info('{:<25s}- {}'.format(name, event, s1))
     def process_current_flowing(self, current_flowing):
         self.current_is_flowing = current_flowing
         self._generate_relay_current()
@@ -95,7 +90,6 @@ class BasicPowerControlStateMachine(statemachine.StateMachine):
         self._generate_relay_current()
     @record_during_test
     def initial_hardware_check(self, event):
-        # rmv self._record('initial_hardware_check', event)
         if event == PowerControlSignals.OPEN_FLOW:
             self._transition(self.wait_for_swipe)
             return None
@@ -112,15 +106,17 @@ class BasicPowerControlStateMachine(statemachine.StateMachine):
         return self._top_state
     @record_during_test
     def authorized_jump(self, event):
-        # rmv self._record('authorized_jump', event)
         if event == KeyMasterSignals.USER_AUTHORIZED:
-            self._pending_member_id = event.id
-            self._transition(self.authorized)
-            return None
+            if event.id != self._active_member_id:
+                self._pending_member_id = event.id
+                self._transition(self.authorized)
+                return None
+            else:
+                self._post_signal(UserFinishedEvent(event.id))
+                return None
         return self._top_state
     @record_during_test
     def wait_for_swipe(self, event):
-        # rmv self._record('wait_for_swipe', event)
         if event == Signals.INITIALIZE_STATE:
             if self.current_is_flowing:
                 self._initial_transition(self.manual_override)
@@ -131,42 +127,35 @@ class BasicPowerControlStateMachine(statemachine.StateMachine):
         return self.authorized_jump
     @record_during_test
     def manual_override(self, event):
-        # rmv self._record('manual_override', event)
         if event == Signals.ENTER_STATE:
-            # fix: log
+            self._observer.log(logging.WARNING, 'Power to the tool has been manually overridden (relay is open; current is flowing).')
             return None
         if event == PowerControlSignals.OPEN_NONE:
             self._transition(self.wait_for_swipe)
             return None
         if event == Signals.EXIT_STATE:
-            # fix: log
+            self._observer.log(logging.WARNING, 'Manual override has ended (relay is open; current is not flowing).')
             return None
         return self.wait_for_swipe
     @record_during_test
     def ghost(self, event):
-        # rmv self._record('ghost', event)
-        # rmv if event == KeyMasterSignals.USER_AUTHORIZED:
-        # rmv     self._pending_member_id = event.id
-        # rmv     self._transition(self.authorized)
-        # rmv     return None
         return self.authorized_jump
     @record_during_test
     def ghost_active(self, event):
-        #rmv self._record('ghost_active', event)
         if event == PowerControlSignals.CLOSED_NONE:
             self._transition(self.ghost_idle)
             return None
         return self.ghost
     @record_during_test
     def ghost_idle(self, event):
-        # rmv self._record('ghost_idle', event)
         if event == Signals.ENTER_STATE:
             self._observer.start_timeout_timer(5)
             return None
         if event == PowerControlSignals.CLOSED_FLOW:
             self._transition(self.ghost_active)
             return None
-        if event == Signals.TIMEOUT:
+        if (event == Signals.TIMEOUT) \
+                or (event == KeyMasterSignals.USER_DENIED):
             self._open_relay()
             self._transition(self.wait_for_swipe)
             return None
@@ -177,7 +166,6 @@ class BasicPowerControlStateMachine(statemachine.StateMachine):
 
     @record_during_test
     def closed(self, event):
-        # rmv self._record('closed', event)
         if event == Signals.ENTER_STATE:
             self._close_relay()
             return None
@@ -186,8 +174,56 @@ class BasicPowerControlStateMachine(statemachine.StateMachine):
             return None
         return self.authorized_jump
     @record_during_test
+    def keep_closed(self, event):
+        return self.closed
+    @record_during_test
     def authorized(self, event):
-        # rmv self._record('authorized', event)
+        if event == Signals.ENTER_STATE:
+            self._active_member_id = self._pending_member_id
+            self._pending_member_id = None
+            return None
+        if event == Signals.INITIALIZE_STATE:
+            if self.current_is_flowing:
+                self._initial_transition(self.authorized_active)
+                return None
+            else:
+                self._initial_transition(self.authorized_idle)
+                return None
+        if event == Signals.EXIT_STATE:
+            self._active_member_id = None
+            self._pending_member_id = None
+            return None
+        return self.keep_closed
+    @record_during_test
+    def authorized_idle(self, event):
+        if event == Signals.ENTER_STATE:
+            self._observer.start_timeout_timer(5*60)
+            return None
+        if event == PowerControlSignals.CLOSED_FLOW:
+            self._transition(self.authorized_active)
+            return None
+        if (event == Signals.TIMEOUT) \
+                or (event == KeyMasterSignals.USER_DENIED):
+            # fix: not tested
+            self._transition(self.wait_for_swipe)
+            return None
+        if event == Signals.EXIT_STATE:
+            self._observer.stop_timeout_timer()
+            return None
+        return self.authorized
+    @record_during_test
+    def authorized_active(self, event):
+        if event == PowerControlSignals.CLOSED_NONE:
+            self._transition(self.authorized_idle)
+            return None
+        return self.authorized
+    @record_during_test
+    def limbo(self, event):
+        return self.keep_closed
+
+
+    @record_during_test
+    def rmv_authorized(self, event):
         if event == Signals.ENTER_STATE:
             self._active_member_id = self._pending_member_id
             self._pending_member_id = None
@@ -203,8 +239,7 @@ class BasicPowerControlStateMachine(statemachine.StateMachine):
             return None
         return self.closed
     @record_during_test
-    def authorized_idle(self, event):
-        # rmv self._record('authorized_idle', event)
+    def rmv_authorized_idle(self, event):
         if event == Signals.ENTER_STATE:
             self._observer.start_timeout_timer(5*60)
             return None
@@ -226,6 +261,5 @@ class BasicPowerControlStateMachine(statemachine.StateMachine):
             return None
         return self.authorized
     @record_during_test
-    def authorized_active(self, event):
-        # rmv self._record('authorized_active', event)
+    def rmv_authorized_active(self, event):
         return self.authorized
