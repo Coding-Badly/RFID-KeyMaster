@@ -50,6 +50,5 @@ def create_state_machine_events(an_enum, module_name):
     module = sys.modules[module_name]
     for e1 in an_enum:
         gn = 'EVENT_' + e1.name
-        gv = StateMachineEvent(e1.value, e1.name)
+        gv = StateMachineEvent(e1, gn)
         setattr(module, gn, gv)
-

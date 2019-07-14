@@ -24,7 +24,8 @@ import logging
 from drivers.signals import Signals, KeyMasterSignals, UserFinishedEvent
 from statemachine import log_during_test, record_during_test, StateMachine, StateMachineEvent
 
-# rmv logger = logging.getLogger(__name__)
+# rmv 
+logger = logging.getLogger(__name__)
 
 class PowerControlSignals(enum.IntEnum):
     FIRST = KeyMasterSignals.LAST
@@ -82,6 +83,12 @@ class BasicPowerControlStateMachine(StateMachine):
                     self.process(PowerControlSignals.OPEN_FLOW)
                 else:
                     self.process(PowerControlSignals.OPEN_NONE)
+    def _handle_user_authorized(self, event):
+        if event.id != self._active_member_id:
+            self._pending_member_id = event.id
+            self._transition(self.authorized)
+        else:
+            self._post_signal(UserFinishedEvent(event.id))
     def process_current_flowing(self, current_flowing):
         self.current_is_flowing = current_flowing
         self._generate_relay_current()
@@ -107,13 +114,8 @@ class BasicPowerControlStateMachine(StateMachine):
     @record_during_test
     def authorized_jump(self, event):
         if event == KeyMasterSignals.USER_AUTHORIZED:
-            if event.id != self._active_member_id:
-                self._pending_member_id = event.id
-                self._transition(self.authorized)
-                return None
-            else:
-                self._post_signal(UserFinishedEvent(event.id))
-                return None
+            self._handle_user_authorized(event)
+            return None
         return self._top_state
     @record_during_test
     def wait_for_swipe(self, event):
@@ -175,6 +177,9 @@ class BasicPowerControlStateMachine(StateMachine):
         return self.authorized_jump
     @record_during_test
     def keep_closed(self, event):
+        if event == KeyMasterSignals.USER_AUTHORIZED:
+            self._handle_user_authorized(event)
+            return None
         return self.closed
     @record_during_test
     def authorized(self, event):
@@ -191,7 +196,6 @@ class BasicPowerControlStateMachine(StateMachine):
                 return None
         if event == Signals.EXIT_STATE:
             self._active_member_id = None
-            self._pending_member_id = None
             return None
         return self.keep_closed
     @record_during_test
@@ -203,8 +207,8 @@ class BasicPowerControlStateMachine(StateMachine):
             self._transition(self.authorized_active)
             return None
         if (event == Signals.TIMEOUT) \
-                or (event == KeyMasterSignals.USER_DENIED):
-            # fix: not tested
+                or (event == KeyMasterSignals.USER_DENIED) \
+                or (event == KeyMasterSignals.USER_FINISHED):
             self._transition(self.wait_for_swipe)
             return None
         if event == Signals.EXIT_STATE:
@@ -216,9 +220,15 @@ class BasicPowerControlStateMachine(StateMachine):
         if event == PowerControlSignals.CLOSED_NONE:
             self._transition(self.authorized_idle)
             return None
+        if event == KeyMasterSignals.USER_FINISHED:
+            self._transition(self.limbo)
+            return None
         return self.authorized
     @record_during_test
     def limbo(self, event):
+        if event == PowerControlSignals.CLOSED_NONE:
+            self._transition(self.wait_for_swipe)
+            return None
         return self.keep_closed
 
 
