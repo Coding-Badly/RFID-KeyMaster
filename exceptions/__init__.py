@@ -2,7 +2,7 @@
 
   All exceptions for RFID-KeyMaster.  This package contains all exceptions that
   RFID-KeyMaster could raise
-  
+
   ----------------------------------------------------------------------------
 
   Copyright 2019 Mike Cole (aka @Draco, MikeColeGuru)
@@ -30,7 +30,6 @@ class DriverClassNameConflict(Exception):
     classes added to the dictionary.  The difference indicates a driver class
     name conflict.
     """
-    pass
 
 class DriverClassNotFoundError(Exception):
     """Driver Class not found trying to load a driver.
@@ -44,23 +43,36 @@ class DriverClassNotFoundError(Exception):
         super().__init__('The driver class {} cannot be found.'.format(class_name))
 
 def english_list(sequence, singular, plural):
-    l1 = len(sequence)
-    if l1 == 0:
+    """Return a list in proper English format.
+
+    Args:
+        sequence: list of items
+        singular: word to return if sequence length is one
+        plural: word to return if sequence length is more than one
+    Returns:
+        A text string with all elements of sequence formatted as in proper
+        English.  If sequence is empty and empty string is returned.  Either
+        singular or plural is returned depending on the length of sequence.
+    """
+    le1 = len(sequence)
+    if le1 == 0:
         return ''
-    elif l1 == 1:
+    if le1 == 1:
         return (sequence[0], singular)
-    elif l1 == 2:
+    if le1 == 2:
         return (' and '.join(sequence), plural)
-    else:
-        return (', and '.join((', '.join(sequence[0:-1]), sequence[-1:][0])), plural)
+    return (', and '.join((', '.join(sequence[0:-1]), sequence[-1:][0])), plural)
 
 def driver_class_and_name(driver):
-    n1 = type(driver).__name__
-    n2 = driver.name
-    if n1 != n2:
-        return n1 + ' / ' + n2
+    """Return a driver's class and name or just the name if the two are the same.
+    """
+    # pylint: disable=no-else-return
+    na1 = type(driver).__name__
+    na2 = driver.name
+    if na1 != na2:
+        return na1 + ' / ' + na2
     else:
-        return n1
+        return na1
 
 class DriverWontStartError(Exception):
     """Driver indicated it won't start.
@@ -74,9 +86,12 @@ class DriverWontStartError(Exception):
     def __init__(self, not_ok_to_start):
         self.not_ok_to_start = not_ok_to_start
         for_the_human = [driver_class_and_name(driver) for driver in not_ok_to_start]
-        super().__init__('A failure with the {} {} prevents the application from starting.'.format(*english_list(for_the_human, 'driver', 'drivers')))
+        super().__init__('A failure with the {} {} prevents the application from starting.' \
+                .format(*english_list(for_the_human, 'driver', 'drivers')))
 
 class WritableMismatchError(Exception):
+    """TwoPhaser failed to correctly determine is-writable.
+    """
     def __init__(self):
         super().__init__('Guessed writable does not match actual writable.')
 
@@ -89,5 +104,5 @@ class LeftOverEdgesError(Exception):
     determine the driver start order.
     """
     def __init__(self):
-        super().__init__('Cycle detected trying to determine the driver start order.  Did you forgot to set determines_start_order to False?')
-
+        super().__init__('Cycle detected trying to determine the driver start order.' \
+                + '  Did you forgot to set determines_start_order to False?')
