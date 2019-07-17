@@ -1,2 +1,2 @@
 # RFID-KeyMaster
-KeyMaster RFID Interlock Raspberry Pi
+Turn a Raspberry Pi into an RFID lock.
