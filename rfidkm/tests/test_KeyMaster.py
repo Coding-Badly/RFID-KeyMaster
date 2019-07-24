@@ -23,5 +23,4 @@
 import rfidkm
 
 def test_001():
-    pass
-
+    tm1 = rfidkm.KeyMaster()

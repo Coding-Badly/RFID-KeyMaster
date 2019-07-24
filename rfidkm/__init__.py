@@ -21,7 +21,7 @@
 ============================================================================="""
 
 class KeyMaster():
-    def make_power_controller(self, group_name):
-        pass
-    def load_configuration(self, path):
+    #def make_power_controller(self, group_name):
+    #    pass
+    def build_from_configuration_file(self, path):
         pass
