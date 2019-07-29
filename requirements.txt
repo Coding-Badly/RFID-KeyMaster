@@ -1,7 +1,6 @@
--e git://github.com/Coding-Badly/python-dispatch.git#egg=python-dispatch
 evdev; platform_system == "Linux"
 pytest
-python-dispatch
+python-dispatch>=0.2.0
 pywin32; platform_system == "Windows"
 PyYAML
 pyzipper
