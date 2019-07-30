@@ -12,7 +12,7 @@ jobs:
       - run: git clone https://github.com/Coding-Badly/python-dispatch.git ~/python-things/python-dispatch
       - run: cd ~/python-things/python-dispatch
       - run: sudo python3 setup.py install
-      - checkout
+      - checkout:
         path: ~/RFID-KeyMaster
       - run: cd ~/RFID-KeyMaster
       - run: sudo pip install -r requirements.txt
