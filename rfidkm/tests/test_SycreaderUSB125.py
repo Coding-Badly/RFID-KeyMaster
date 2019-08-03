@@ -30,11 +30,12 @@ if not exercise.rfid_readers:
 if platform.system() == 'Windows':
     pytest.skip("skipping tests that will not run on Windows", allow_module_level=True)
 
-from drivers.signals import Signals, KeyMasterSignals
-from drivers.DriverBase import DriverBase, DriverGroup
-from drivers.RFID.SycreaderUSB125 import SycreaderUSB125
-from drivers.RFID.SycreaderUSB125 import find_an_saor_rfid_readers
 import logging
+
+from rfidkm.drivers.signals import Signals, DriverSignals, KeyMasterSignals
+from rfidkm.drivers.DriverBase import DriverBase, DriverGroup
+from rfidkm.drivers.RFID.SycreaderUSB125 import SycreaderUSB125
+from rfidkm.drivers.RFID.SycreaderUSB125 import find_an_saor_rfid_readers
 
 logger = logging.getLogger(__name__)
 
@@ -50,11 +51,11 @@ class NormalTag(TagBase):
 class StopTag(TagBase):
     def action(self, target):
         super().action(target)
-        target.publish(Signals.STOP_NOW)
+        target.publish(DriverSignals.STOP_NOW)
         return 'stop'
 
 class SimplePrintTagController(DriverBase):
-    _events_ = [Signals.STOP_NOW]
+    _events_ = [DriverSignals.STOP_NOW]
     def setup(self):
         super().setup()
         self._no_tag = NormalTag('Unknown')
@@ -64,7 +65,9 @@ class SimplePrintTagController(DriverBase):
         self._tags['0005675589'] = NormalTag('Green')
         self._tags['0008683072'] = NormalTag('Purple')
         self._tags['0006276739'] = NormalTag('Red')
-        self._tags['0016182332'] = StopTag('Yellow')
+        self._tags['0007062381'] = NormalTag('Pink')
+        self._tags['0016182332'] = NormalTag('Yellow')
+        self._tags['0015261977'] = StopTag('Death of Rats')
         self._reader = int(self.config.get('reader', 0))
         self.subscribe(None, KeyMasterSignals.SWIPE_10, self.receive_swipe_10, determines_start_order=False)
     def startup(self):
@@ -77,8 +80,8 @@ class SimplePrintTagController(DriverBase):
 
 def create_rfid_reader(config):
     root = DriverGroup()
-    jk1 = root.add(SycreaderUSB125(name='Test Me', config=config, loader=None, id=None))
-    tm1 = root.add(SimplePrintTagController(name='Simple Print Tag Controller', config=config, loader=None, id=None))
+    jk1 = root.add(SycreaderUSB125(config))
+    tm1 = root.add(SimplePrintTagController(config))
     return root
 
 def run_root(root):
