@@ -77,4 +77,3 @@ def pytest_configure(config):
         exercise.piface_relays = True
     elif config.getoption("--exercise_rfid_readers"):
         exercise.rfid_readers = True
-

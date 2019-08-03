@@ -260,9 +260,9 @@ locales\tlocales/default_environment_locale\tselect\ten_US.UTF-8
         go_again = True
         csm.increment_current_step()
     elif csm.get_current_step() == 15:
-        # rmv wall_and_print('Install python-dispatch package from GitHub.', csm.get_current_step())
-        # rmv subprocess.run(['git','clone','https://github.com/Coding-Badly/python-dispatch.git','/home/pi/python-things/python-dispatch'], check=True)
-        # rmv subprocess.run(['python3','/home/pi/python-things/python-dispatch/setup.py','install'], check=True)
+        wall_and_print('Install python-dispatch package from GitHub.', csm.get_current_step())
+        subprocess.run(['git','clone','https://github.com/Coding-Badly/python-dispatch.git','/home/pi/python-things/python-dispatch'], check=True)
+        subprocess.run(['python3','/home/pi/python-things/python-dispatch/setup.py','install'], cwd='/home/pi/python-things/python-dispatch/', check=True)
         #subprocess.run(['rm','-rf','/home/pi/python-dispatch'], check=True)
         go_again = True
         csm.increment_current_step()
