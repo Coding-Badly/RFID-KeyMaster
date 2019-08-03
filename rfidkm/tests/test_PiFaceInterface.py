@@ -30,11 +30,12 @@ if not exercise.piface_relays:
 if platform.system() == 'Windows':
     pytest.skip("skipping tests that will not run on Windows", allow_module_level=True)
 
-from drivers.DriverBase import DriverGroup, DriverBase, DeathOfRats
-from drivers.signals import KeyMasterSignals
-from drivers.Interface.PiFaceDigital2Interface import PiFaceDigital2Relays
-from drivers.Test.RunForSeconds import RunForSeconds
 import logging
+
+from rfidkm.drivers.DriverBase import DriverGroup, DriverBase, DeathOfRats
+from rfidkm.drivers.signals import KeyMasterSignals
+from rfidkm.drivers.Interface.PiFaceDigital2Interface import PiFaceDigital2Relays
+from rfidkm.drivers.Test.RunForSeconds import RunForSeconds
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +60,8 @@ def run_toggle_relay(which, number):
     root = DriverGroup()
     #dor = root.add(DeathOfRats(name='DeathOfRats', config=None, loader=None, id=None))
     dor = root.add(RunForSeconds({'seconds':10.0}))
-    pf1 = root.add(PiFaceDigital2Relays(name='Test Me', config=config, loader=None, id=None))
-    tm1 = root.add(SimpleToggleController(name='Simple Toggle Controller', config=None, loader=None, id=None))
+    pf1 = root.add(PiFaceDigital2Relays(config))
+    tm1 = root.add(SimpleToggleController(None))
     root.setup()
     root.start()
     root.join()
