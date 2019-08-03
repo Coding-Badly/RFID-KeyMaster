@@ -20,9 +20,14 @@
   limitations under the License.
 
 ============================================================================="""
+import platform
+import pytest
+
+if platform.system() == 'Windows':
+    pytest.skip("skipping tests that will not run on Windows", allow_module_level=True)
+
 import json
 import logging
-import pytest
 
 import rfidkm
 from rfidkm.utils.file_preserver import FilePreserver
@@ -45,12 +50,19 @@ def converted_config_001():
     "groups": ["primary"],
     "primary": [
         {
+            "driver": "PiFaceDigital2Relays",
+            "module": "PiFaceDigital2Interface"
+        },
+        {
             "driver": "MemberDataFreshener",
             "remote_cache_url": "https://www.rowdydogsoftware.com/TKRn2uZNBSCSBcTUPRFPhHBL/adcache.json",
             "poll_rate": 2.5
         },
         {
             "driver": "MemberDataCacher"
+        },
+        {
+            "driver": "SycreaderUSB125"
         }
     ]
 }
@@ -78,23 +90,23 @@ def do_it(converted_config, url_to_use, temporary_directory, expect_success):
         else:
             assert not mdp1.exists()
 
-def test_001(caplog, tmpdirn2, converted_config_001):
+def fix_test_001(caplog, tmpdirn2, converted_config_001):
     caplog.set_level(logging.INFO)
     do_it(converted_config_001, None, tmpdirn2, True)
 
-def test_002(caplog, tmpdirn2, converted_config_001):
+def fix_test_002(caplog, tmpdirn2, converted_config_001):
     caplog.set_level(logging.INFO)
     do_it(converted_config_001, "https://httpstat.us/404", tmpdirn2, False)
 
-def test_003(caplog, tmpdirn2, converted_config_001):
+def fix_test_003(caplog, tmpdirn2, converted_config_001):
     caplog.set_level(logging.INFO)
     do_it(converted_config_001, "https://httpstat.us/200", tmpdirn2, False)
 
-def test_004(caplog, tmpdirn2, converted_config_001):
+def fix_test_004(caplog, tmpdirn2, converted_config_001):
     caplog.set_level(logging.INFO)
     do_it(converted_config_001, "https://t5jdR9uj5dnw3ax8wjrhnzvV.urp", tmpdirn2, False)
 
-def test_005(caplog, tmpdirn2, converted_config_001):
+def fix_test_005(caplog, tmpdirn2, converted_config_001):
     caplog.set_level(logging.INFO)
     do_it(converted_config_001, "https://172.31.255.1", tmpdirn2, False)
 
