@@ -1,8 +1,7 @@
 """=============================================================================
 
-  BlackTagBringsDeathOfRats for RFID-KeyMaster testing.
-  BlackTagBringsDeathOfRats stops all threads when the black RFID tag is
-  swiped.
+  SimpleToggleController for RFID-KeyMaster.  This controller toggles a PiFace
+  Digital 2 relay about every two seconds.
 
   ----------------------------------------------------------------------------
 
@@ -21,14 +20,25 @@
   limitations under the License.
 
 ============================================================================="""
-from rfidkm.drivers.signals import KeyMasterSignals
-from rfidkm.drivers.DriverBase import DriverBase, DeathOfRats
+import logging
 
-class BlackTagBringsDeathOfRats(DeathOfRats):
+from rfidkm.drivers.DriverBase import DriverBase
+from rfidkm.drivers.signals import KeyMasterSignals
+
+logger = logging.getLogger(__name__)
+
+class SimpleToggleController(DriverBase):
+    _events_ = [KeyMasterSignals.CONTROL_RELAY]
     def setup(self):
         super().setup()
-        self._black_tag = self.config.get('black_tag', '0015261977')
-        self.subscribe(None, KeyMasterSignals.SWIPE_10, self.receive_swipe_10, determines_start_order=False)
-    def receive_swipe_10(self, timestamp, rfid):
-        if rfid == self._black_tag:
-            self._stop_now()
+        self._toggle_rate = float(self.config.get('toggle_rate', 1.95))
+    def startup(self):
+        super().startup()
+        self._state = 0
+        self.call_every(self._toggle_rate, self.toggle_relay, fire_now=True)
+        self.open_for_business()
+    def toggle_relay(self):
+        self._state ^= 1
+        logger.info('tick {}'.format(self._state))
+        self.publish(KeyMasterSignals.CONTROL_RELAY, self._state)
+

@@ -44,8 +44,12 @@ class Authorizer(DriverBase):
         super().startup()
         self.open_for_business()
     def receive_user_logged_in(self, data):
+        logger.info('Authorizer...')
         # data is an instance of AuthenticatorData
         effective_rights = self._context.get_effective_rights(data.groups)
         data.effective_rights = effective_rights
         data.authorized = len(effective_rights) > 0
+        logger.info('  {}'.format(data))
+        logger.info('  {}'.format(data.effective_rights))
+        logger.info('  {}'.format(data.authorized))
         self.publish(KeyMasterSignals.USER_AUTHORIZED, data)

@@ -43,26 +43,36 @@ def converted_config_001():
     },
     "root": [
         {
-            "driver": "RunForSeconds",
-            "seconds": 10.0
+            "driver": "BlackTagBringsDeathOfRats"
         }
     ],
     "groups": ["primary"],
     "primary": [
         {
-            "driver": "PiFaceDigital2Relays",
-            "module": "PiFaceDigital2Interface"
-        },
-        {
             "driver": "MemberDataFreshener",
             "remote_cache_url": "https://www.rowdydogsoftware.com/TKRn2uZNBSCSBcTUPRFPhHBL/adcache.json",
-            "poll_rate": 2.5
+            "poll_rate": 120.0
         },
         {
             "driver": "MemberDataCacher"
         },
         {
             "driver": "SycreaderUSB125"
+        },
+        {
+            "driver": "SimpleToggleController",
+            "toggle_rate": 120.0
+        },
+        {
+            "driver": "PiFaceDigital2Relays",
+            "module": "PiFaceDigital2Interface"
+        },
+        {
+            "driver": "Authenticator"
+        },
+        {
+            "driver": "Authorizer",
+            "groups": [["Automotive 102 (Lift Training)","power"]]
         }
     ]
 }
@@ -90,7 +100,7 @@ def do_it(converted_config, url_to_use, temporary_directory, expect_success):
         else:
             assert not mdp1.exists()
 
-def fix_test_001(caplog, tmpdirn2, converted_config_001):
+def test_001(caplog, tmpdirn2, converted_config_001):
     caplog.set_level(logging.INFO)
     do_it(converted_config_001, None, tmpdirn2, True)
 
