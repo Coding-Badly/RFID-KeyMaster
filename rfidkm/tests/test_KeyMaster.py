@@ -23,6 +23,14 @@
 import platform
 import pytest
 
+import rfidkm.tests.exercise as exercise
+
+if not exercise.piface_relays:
+    pytest.skip("skipping relay tests", allow_module_level=True)
+
+if not exercise.rfid_readers:
+    pytest.skip("skipping RFID reader tests", allow_module_level=True)
+
 if platform.system() == 'Windows':
     pytest.skip("skipping tests that will not run on Windows", allow_module_level=True)
 
