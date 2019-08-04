@@ -21,6 +21,7 @@
 ============================================================================="""
 import enum
 import logging
+
 from rfidkm.drivers.signals import Signals, KeyMasterSignals, UserFinishedEvent
 from rfidkm.statemachine import log_during_test, record_during_test, StateMachine, StateMachineEvent
 
@@ -37,29 +38,12 @@ class PowerControlSignals(enum.IntEnum):
 # https://drive.google.com/drive/u/2/folders/1tiE0BajeXZB4ZV3zA4-h33tj5u9IZf24
 # https://en.wikipedia.org/wiki/Observer_pattern
 
-class PowerControlObserver():
-    def __init__(self, subject):
-        self._subject = subject
-    def close_relay(self):
-        log_during_test(self._subject, 'close the relay')
-        self._subject.relay_is_closed = True
-    def open_relay(self):
-        log_during_test(self._subject, 'open the relay')
-        self._subject.relay_is_closed = False
-    def start_timeout_timer(self, seconds):
-        log_during_test(self._subject, 'post a timeout in {} seconds'.format(seconds))
-    def stop_timeout_timer(self):
-        log_during_test(self._subject, 'cancel the timeout request')
-    def log(lvl, msg, *args, **kwargs):
-        # fix: log_during_test
-        pass
-
 class BasicPowerControlStateMachine(StateMachine):
     def _after_init(self):
         super()._after_init()
         self.current_is_flowing = None
         self.relay_is_closed = None
-        self._observer = PowerControlObserver(self)
+        self._observer = LockControlObserver(self)
         self._active_member_id = None
         self._pending_member_id = None
     def _get_initial_state(self):
