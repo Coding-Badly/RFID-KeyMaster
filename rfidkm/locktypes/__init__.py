@@ -23,7 +23,26 @@
   limitations under the License.
 
 ============================================================================="""
-from .lockcontrolobserver import LockControlObserver
+from rfidkm.exceptions import DriverClassNotFoundError
+
+from .lockcontrolobserver import LockControlObserver, LockControlObserverForTesting
+from .BasicPowerControlStateMachine import BasicPowerControlStateMachine
 
 def create_state_machine(class_name, controller, config):
-    pass
+    if class_name == 'BasicPowerControlStateMachine':
+        rv1 = BasicPowerControlStateMachine()
+        if controller is None:
+            controller = LockControlObserverForTesting(rv1)
+        rv1._set_observer(controller)
+        rv1.initialize_machine()
+        return rv1
+    else:
+        raise DriverClassNotFoundError(class_name)
+
+"""
+cls
+python
+import rfidkm.locktypes
+#rfidkm.locktypes.create_state_machine('Whatever', None, None)
+rfidkm.locktypes.create_state_machine('BasicPowerControlStateMachine', None, None)
+"""

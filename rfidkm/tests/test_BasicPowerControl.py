@@ -22,8 +22,8 @@
 import logging
 
 from rfidkm.drivers.signals import KeyMasterSignals, Signals, UserAuthorizedEvent, UserDeniedEvent, UserFinishedEvent
-from rfidkm.locktypes.BasicPowerControl import create_controller_state_machine
-from rfidkm.locktypes.BasicPowerControl.BasicPowerControlStateMachine import PowerControlSignals
+from rfidkm.locktypes import create_state_machine
+from rfidkm.locktypes.BasicPowerControlStateMachine import PowerControlSignals
 from rfidkm.statemachine import StateMachineEvent, log_during_test
 from rfidkm.statemachine.state_machine import EVENT_GET_SUPER_STATE, EVENT_INITIALIZE_STATE, EVENT_ENTER_STATE, EVENT_EXIT_STATE, EVENT_TIMEOUT
 
@@ -44,7 +44,7 @@ def log_recording(recording):
 
 def create_to_manual_override(order):
     e1 = list()
-    tm1 = create_controller_state_machine(None, None)
+    tm1 = create_state_machine('BasicPowerControlStateMachine', None, None)
     e1.append(('E', "initial_hardware_check", "initial_hardware_check", EVENT_ENTER_STATE))
     e1.append(('E', "initial_hardware_check", "initial_hardware_check", EVENT_INITIALIZE_STATE))
     assert e1 == tm1._recording
@@ -73,7 +73,7 @@ def test_manual_override_from_startup(caplog):
 
 def create_to_boring(order):
     e1 = list()
-    tm1 = create_controller_state_machine(None, None)
+    tm1 = create_state_machine('BasicPowerControlStateMachine', None, None)
     e1.append(('E', "initial_hardware_check", "initial_hardware_check", EVENT_ENTER_STATE))
     e1.append(('E', "initial_hardware_check", "initial_hardware_check", EVENT_INITIALIZE_STATE))
     assert e1 == tm1._recording
@@ -101,7 +101,7 @@ def test_boring_from_startup(caplog):
 def test_relay_left_closed_from_startup(caplog):
     caplog.set_level(logging.INFO)
     e1 = list()
-    tm1 = create_controller_state_machine(None, None)
+    tm1 = create_state_machine('BasicPowerControlStateMachine', None, None)
     e1.append(('E', "initial_hardware_check", "initial_hardware_check", EVENT_ENTER_STATE))
     e1.append(('E', "initial_hardware_check", "initial_hardware_check", EVENT_INITIALIZE_STATE))
     assert e1 == tm1._recording
@@ -117,7 +117,7 @@ def test_relay_left_closed_from_startup(caplog):
     assert e1 == tm1._recording
     logger.info('----------')
     # Ensure setting current flowing and relay closed is orthogonal
-    tm1 = create_controller_state_machine(None, None)
+    tm1 = create_state_machine('BasicPowerControlStateMachine', None, None)
     tm1.process_current_flowing(False)
     tm1.process_relay_closed(True)
     log_recording(tm1._recording)
@@ -125,7 +125,7 @@ def test_relay_left_closed_from_startup(caplog):
 
 def create_to_ghost_active(order):
     e1 = list()
-    tm1 = create_controller_state_machine(None, None)
+    tm1 = create_state_machine('BasicPowerControlStateMachine', None, None)
     e1.append(('E', "initial_hardware_check", "initial_hardware_check", EVENT_ENTER_STATE))
     e1.append(('E', "initial_hardware_check", "initial_hardware_check", EVENT_INITIALIZE_STATE))
     assert e1 == tm1._recording
@@ -502,12 +502,6 @@ def create_limbo():
     assert tm1._pending_member_id is None
     assert e1 == tm1._recording
     return (e1, tm1)
-
-# rmv def test_authorized_active_limbo(caplog):
-# rmv     caplog.set_level(logging.INFO)
-# rmv     e1, tm1 = create_limbo()
-# rmv     log_recording(tm1._recording)
-# rmv     assert e1 == tm1._recording
 
 def test_limbo_current_stops(caplog):
     caplog.set_level(logging.INFO)

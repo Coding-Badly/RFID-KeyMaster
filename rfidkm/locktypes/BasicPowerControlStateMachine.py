@@ -23,7 +23,8 @@ import enum
 import logging
 
 from rfidkm.drivers.signals import Signals, KeyMasterSignals, UserFinishedEvent
-from rfidkm.statemachine import log_during_test, record_during_test, StateMachine, StateMachineEvent
+from rfidkm.statemachine import record_during_test, StateMachine, StateMachineEvent
+from .lockcontrolobserver import LockControlObserver
 
 # rmv 
 logger = logging.getLogger(__name__)
@@ -36,14 +37,13 @@ class PowerControlSignals(enum.IntEnum):
     CLOSED_FLOW = enum.auto()
 
 # https://drive.google.com/drive/u/2/folders/1tiE0BajeXZB4ZV3zA4-h33tj5u9IZf24
-# https://en.wikipedia.org/wiki/Observer_pattern
 
 class BasicPowerControlStateMachine(StateMachine):
     def _after_init(self):
         super()._after_init()
         self.current_is_flowing = None
         self.relay_is_closed = None
-        self._observer = LockControlObserver(self)
+        self._observer = None
         self._active_member_id = None
         self._pending_member_id = None
     def _get_initial_state(self):
@@ -73,6 +73,8 @@ class BasicPowerControlStateMachine(StateMachine):
             self._transition(self.authorized)
         else:
             self._post_signal(UserFinishedEvent(event.id))
+    def _set_observer(self, observer):
+        self._observer = observer
     def process_current_flowing(self, current_flowing):
         self.current_is_flowing = current_flowing
         self._generate_relay_current()
