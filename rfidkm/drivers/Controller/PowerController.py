@@ -83,4 +83,3 @@ class PowerController(DriverBase):
     def receive_relay_closed(self, relay_closed):
         logger.info('receive_relay_closed / relay_closed = {}'.format(relay_closed))
         # fix self._state(KeyMasterSignals.RELAY_CLOSED, relay_closed)
-

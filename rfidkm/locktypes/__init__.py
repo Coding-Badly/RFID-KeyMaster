@@ -38,11 +38,3 @@ def create_state_machine(class_name, controller, config):
         return rv1
     else:
         raise DriverClassNotFoundError(class_name)
-
-"""
-cls
-python
-import rfidkm.locktypes
-#rfidkm.locktypes.create_state_machine('Whatever', None, None)
-rfidkm.locktypes.create_state_machine('BasicPowerControlStateMachine', None, None)
-"""

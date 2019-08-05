@@ -68,8 +68,7 @@ def converted_config_001():
             "driver": "SycreaderUSB125"
         },
         {
-            "driver": "SimpleToggleController",
-            "toggle_rate": 120.0
+            "driver": "BasicController"
         },
         {
             "driver": "PiFaceDigital2Relays",
