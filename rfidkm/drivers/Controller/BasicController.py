@@ -39,10 +39,29 @@ class BasicController(DriverBase):
         lock_type = self.config.get('lock_type', 'BasicPowerControl')
         class_name = lock_type + 'StateMachine'
         self._state_machine = create_state_machine(class_name, self, self.config)
-        # fix self.subscribe(None, KeyMasterSignals.USER_AUTHORIZED, self.receive_user_authorized)
-        # fix self.subscribe(None, KeyMasterSignals.USER_LOGIN_FAILED, self.receive_user_login_failed)
+        self.subscribe(None, KeyMasterSignals.USER_AUTHORIZED, self.receive_user_authorized)
+        self.subscribe(None, KeyMasterSignals.USER_LOGIN_FAILED, self.receive_user_login_failed)
         # fix self.subscribe(None, KeyMasterSignals.CURRENT_FLOWING, self._receive_current_flowing)
         # fix self.subscribe(None, KeyMasterSignals.RELAY_CLOSED, self.receive_relay_closed, determines_start_order=False)
     def startup(self):
         super().startup()
         self.open_for_business()
+    def receive_user_authorized(self, data):
+        logger.info('BasicController...')
+        logger.info('{}'.format(data.rfid))
+        logger.info('{}'.format(data.authorized))
+    def receive_user_login_failed(self, data):
+        logger.info('BasicController...')
+        logger.info('{}'.format(data.rfid))
+
+"""
+from rfidkm.drivers.signals import KeyMasterSignals, Signals, UserAuthorizedEvent, UserDeniedEvent, UserFinishedEvent
+
+self._state_machine.process_relay_closed(True / False)
+self._state_machine.process_current_flowing(True / False)
+
+self._state_machine.process(UserAuthorizedEvent('0006276739'))  # red tag
+self._state_machine.process(UserDeniedEvent('0002864796'))  # blue tag
+
+"""
+
