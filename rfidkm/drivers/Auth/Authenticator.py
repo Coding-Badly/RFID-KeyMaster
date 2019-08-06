@@ -84,10 +84,10 @@ class Authenticator(DriverBase):
         member_data = self._member_data.get(rfid, None)
         t1 = AuthenticatorData(rfid)
         if member_data:
-            logger.info('"{}" authenticated; publishing a USER_LOGGED_IN.'.format(rfid))
+            # rmv logger.info('"{}" authenticated; publishing a USER_LOGGED_IN.'.format(rfid))
             t1.from_member_data(member_data)
             self.publish(KeyMasterSignals.USER_LOGGED_IN, t1)
         else:
-            logger.info('"{}" failed to authenticate; publishing a USER_LOGIN_FAILED.'.format(rfid))
+            # rmv logger.info('"{}" failed to authenticate; publishing a USER_LOGIN_FAILED.'.format(rfid))
             # fix? Should MemberDataFreshener check for fresh data when a login failure occurs?
             self.publish(KeyMasterSignals.USER_LOGIN_FAILED, t1)
