@@ -39,20 +39,26 @@ class BasicController(DriverBase):
         lock_type = self.config.get('lock_type', 'BasicPowerControl')
         class_name = lock_type + 'StateMachine'
         self._state_machine = create_state_machine(class_name, self, self.config)
-        self.subscribe(None, KeyMasterSignals.USER_AUTHORIZED, self.receive_user_authorized)
-        self.subscribe(None, KeyMasterSignals.USER_LOGIN_FAILED, self.receive_user_login_failed)
-        # fix self.subscribe(None, KeyMasterSignals.CURRENT_FLOWING, self._receive_current_flowing)
-        # fix self.subscribe(None, KeyMasterSignals.RELAY_CLOSED, self.receive_relay_closed, determines_start_order=False)
+        self.subscribe(None, KeyMasterSignals.USER_AUTHORIZED, self._receive_user_authorized)
+        self.subscribe(None, KeyMasterSignals.USER_LOGIN_FAILED, self._receive_user_login_failed)
+        self.subscribe(None, KeyMasterSignals.CURRENT_FLOWING, self._receive_current_flowing)
+        self.subscribe(None, KeyMasterSignals.RELAY_CLOSED, self._receive_relay_closed, determines_start_order=False)
     def startup(self):
         super().startup()
         self.open_for_business()
-    def receive_user_authorized(self, data):
-        logger.info('BasicController...')
+    def _receive_user_authorized(self, data):
+        logger.info('receive_user_authorized...')
         logger.info('{}'.format(data.rfid))
         logger.info('{}'.format(data.authorized))
-    def receive_user_login_failed(self, data):
-        logger.info('BasicController...')
+    def _receive_user_login_failed(self, data):
+        logger.info('receive_user_login_failed...')
         logger.info('{}'.format(data.rfid))
+    def _receive_current_flowing(self, value):
+        logger.info('receive_current_flowing...')
+        logger.info('{}'.format(value))
+    def _receive_relay_closed(self, value):
+        logger.info('receive_relay_closed...')
+        logger.info('{}'.format(value))
 
 """
 from rfidkm.drivers.signals import KeyMasterSignals, Signals, UserAuthorizedEvent, UserDeniedEvent, UserFinishedEvent

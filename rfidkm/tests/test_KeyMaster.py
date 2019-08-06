@@ -71,7 +71,11 @@ def converted_config_001():
             "driver": "BasicController"
         },
         {
-            "driver": "PiFaceDigital2Relays",
+            "driver": "PiFaceDigital2Relay",
+            "module": "PiFaceDigital2Interface"
+        },
+        {
+            "driver": "PiFaceDigital2SimulateCurrentSensor",
             "module": "PiFaceDigital2Interface"
         },
         {
@@ -142,7 +146,7 @@ def converted_config_power_control():
     ],
     "primary": [
         {
-            "driver": "PiFaceDigital2Relays",
+            "driver": "PiFaceDigital2Relay",
             "module": "PiFaceDigital2Interface"
         },
         {

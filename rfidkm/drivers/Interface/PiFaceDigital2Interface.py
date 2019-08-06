@@ -2,7 +2,7 @@
 
   PiFaceDigital2Interface for RFID-KeyMaster.
 
-  PiFaceDigital2Relays is a driver for the relays on the PiFace Digital 2 HAT.
+  PiFaceDigital2Relay is a driver for the relays on the PiFace Digital 2 HAT.
 
   PiFaceDigital2SimulateCurrentSensor toggles the current flow state when a
   pushbutton is pressed on the HAT.
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 #pifacedigitalio.core.init()
 
-class PiFaceDigital2Relays(DriverBase):
+class PiFaceDigital2Relay(DriverBase):
     _events_ = [KeyMasterSignals.RELAY_CLOSED]
     def setup(self):
         super().setup()
@@ -93,4 +93,3 @@ class PiFaceDigital2SimulateCurrentSensor(DriverBase):
     def shutdown(self):
         self._listener.deactivate()
         super().shutdown()
-

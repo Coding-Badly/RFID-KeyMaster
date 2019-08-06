@@ -73,7 +73,7 @@ def raw_config_001():
             "driver": "PowerController"
         },
         {
-            "driver": "PiFaceDigital2Relays",
+            "driver": "PiFaceDigital2Relay",
             "module": "PiFaceDigital2Interface"
         }
     ]
@@ -140,7 +140,7 @@ def raw_config_003():
             "expected_relay_was_closed": false
         },
         {
-            "driver": "PiFaceDigital2Relays",
+            "driver": "PiFaceDigital2Relay",
             "module": "PiFaceDigital2Interface"
         }
     ]
