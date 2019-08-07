@@ -26,12 +26,12 @@
 import logging
 from rfidkm.drivers.signals import KeyMasterSignals
 from rfidkm.drivers.DriverBase import DriverBase
-from rfidkm.locktypes import create_state_machine
+from rfidkm.locktypes import create_state_machine, LockControlObserver
 from rfidkm.utils.securitycontext import Permission
 
 logger = logging.getLogger(__name__)
 
-class BasicController(DriverBase):
+class BasicController(DriverBase, LockControlObserver):
     _events_ = [KeyMasterSignals.CONTROL_RELAY]
     def setup(self):
         super().setup()
@@ -56,9 +56,11 @@ class BasicController(DriverBase):
     def _receive_current_flowing(self, value):
         logger.info('receive_current_flowing...')
         logger.info('{}'.format(value))
+        self._state_machine.process_current_flowing(value)
     def _receive_relay_closed(self, value):
         logger.info('receive_relay_closed...')
         logger.info('{}'.format(value))
+        self._state_machine.process_relay_closed(value)
 
 """
 from rfidkm.drivers.signals import KeyMasterSignals, Signals, UserAuthorizedEvent, UserDeniedEvent, UserFinishedEvent
