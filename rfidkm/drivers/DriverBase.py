@@ -7,6 +7,30 @@
   siblings so drivers can interact directly with each other; 3. Turn all
   unexpected exceptions into a clean exit.
 
+  DriverBase instances have a state.  The first state is "constructed".  This
+  stated is implied from an instance being created.  A minimum amount of 
+  initialization is performed so the instance is stable (but unusable).  
+  Constructed happens from the primary thread.
+  
+  The next state is "initialized".  This state is entered when setup is
+  called.  Initialized happens from the primary thread.  Typical activities
+  include locating and connecting to partners.  Just enough should be done to
+  make the instance ready to run.
+  
+  The next state is "running".  This state is entered when start_and_wait is
+  called.  Each instance is expected to create a thread then continue running
+  from that thread.  The start_and_wait method is called from the primary
+  thread and blocks until the thread has indicated it is ready for business.
+  
+  When running is entered, the run method is called which calls startup, loop
+  until _keep_running is False, then shutdown.
+
+  The thread terminating leaves the DriverBase in a "terminated" state.
+  Theoretically, it is possible to restart the thread transitioning to
+  running.  At the time this was written that is neither tested nor needed.
+  
+  If teardown is called the DriverBase transitions back to constructed.
+
   ----------------------------------------------------------------------------
 
   Copyright 2019 Mike Cole (aka @Draco, MikeColeGuru)
@@ -378,29 +402,35 @@ class DriverBase(Thread, Dispatcher):
         self._start_before = set()
         # fix: Use the following instead of returning a Boolean from setup.
         self._ok_to_start = True
-        super().__init__(name=self._name)
+        super().__init__(name=self._name)  // fix
         self._after_init()
 
+    # constructed
     def _after_init(self):
         pass
 
+    # setup to initialized
     @property
     def name(self):
         return self._name
 
+    # setup to initialized
     def emits_event(self, event_name):
         events = getattr(self, '_EVENTS_', None)
         if events is None:
             return False
         return event_name in events
 
+    # setup to initialized
     def has_values(self):
         return False
 
+    # setup to initialized
     def find_driver_by_event(self, event_name, skip_self=True):
         skip = self if skip_self else None
         return self._parent.find_driver_by_event(event_name, skip)
 
+    # setup to initialized
     def find_driver_by_name(self, driver_name, skip_self=True):
         skip = self if skip_self else None
         return self._parent.find_driver_by_name(driver_name, skip)
@@ -411,6 +441,7 @@ class DriverBase(Thread, Dispatcher):
     # rmv         raise RequiredDriverException(driver_name)
     # rmv     return driver  
 
+    # setup to initialized
     def subscribe(self, driver_name, event_name, id, determines_start_order=True, raise_on_not_found=True, skip_self=True):
         if driver_name is None:
             partner = self.find_driver_by_event(event_name, skip_self)
@@ -432,18 +463,21 @@ class DriverBase(Thread, Dispatcher):
             partner._start_before.add(self)
         return True
 
+    # running
     def publish(self, event_name, *args, **kwargs):
         return self.emit(event_name, *args, **kwargs)
 
     #fix
     #def revoke(self):
 
+    # running
     def call_after(self, after, method, *args, **kwargs):
         event = DriverEvent(method, args, kwargs)
         timelet = DriverTimelet(event, monotonic()+after)
         heapq.heappush(self._timelets, timelet)
         return timelet
 
+    # running
     def call_every(self, every, method, *args, **kwargs):
         event = DriverEvent(method, args, kwargs)
         fire_now = kwargs.get('fire_now', None)
@@ -455,15 +489,19 @@ class DriverBase(Thread, Dispatcher):
         heapq.heappush(self._timelets, timelet)
         return timelet
 
+    # setup to initialized
     def register(self, fileobj, events, data=None):
         self._event_queue.register(fileobj, events, data)
 
+    # teardown to constructed
     def unregister(self, fileobj):
         self._event_queue.register(fileobj)
 
+    # start to running
     def ok_to_start(self):
         return self._ok_to_start
 
+    # anytime before start
     def dont_start(self):
         self._ok_to_start = False
 
