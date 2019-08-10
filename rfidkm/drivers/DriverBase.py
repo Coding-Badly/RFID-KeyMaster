@@ -26,6 +26,7 @@
 
 ============================================================================="""
 from collections import defaultdict, OrderedDict
+import enum
 import heapq
 import logging
 from operator import methodcaller
@@ -60,6 +61,20 @@ class FauxDriverParent():
         return None
 
 default_driver_parent = FauxDriverParent()
+
+class DriverBaseState(enum.IntEnum):
+    FIRST = 1
+    CONSTRUCTING = enum.auto()
+    CONSTRUCTED = enum.auto()
+    INITIALIZING = enum.auto()
+    INITIALIZED = enum.auto()
+    STARTING = enum.auto()
+    STARTED = enum.auto()
+    STOPPING = enum.auto()
+    STOPPED = enum.auto()
+    TEARINGDOWN = enum.auto()
+    TORNDOWN = enum.auto()
+    LAST = enum.auto()
 
 class DriverGroup(OrderedDict):
     def __init__(self, name=None):
@@ -203,7 +218,10 @@ class DriverGroup(OrderedDict):
 
     def setup(self):
         for driver in self._check_flattened():
+            assert driver._state == DriverBaseState.CONSTRUCTED
+            driver._state = DriverBaseState.INITIALIZING
             driver.setup()
+            driver._state = DriverBaseState.INITIALIZED
 
     def start(self):
         drivers_in_start_order = self._check_in_start_order()
@@ -211,15 +229,21 @@ class DriverGroup(OrderedDict):
         if not_ok_to_start:
             raise DriverWontStartError(not_ok_to_start)
         for driver in drivers_in_start_order:
+            assert driver._state == DriverBaseState.INITIALIZED
+            driver._state = DriverBaseState.STARTING
             driver.start_and_wait()
 
     def teardown(self):
         for driver in self._check_flattened():
+            assert driver._state == DriverBaseState.STOPPED
+            driver._state = DriverBaseState.TEARINGDOWN
             driver.teardown()
+            driver._state = DriverBaseState.TORNDOWN
 
     def join(self):
         for driver in self._check_flattened():
             driver.join()
+            driver._state = DriverBaseState.STOPPED
 
 class DriverEvent():
     def __init__(self, id, args, kwargs):
@@ -290,7 +314,7 @@ class DriverThunk():
         return True
 
 class DriverQueue(queue.Queue):
-    def setup(self):
+    def _setup(self):
         pass
     def teardown(self):
         pass
@@ -299,7 +323,7 @@ class DriverQueuePlusSelect():
     BYTE_ZERO = chr(0).encode()
     def __init__(self, *args, **kwargs):
         self._queue = queue.Queue(*args, **kwargs)
-    def setup(self):
+    def _setup(self):
         self._selector = selectors.DefaultSelector()
         self._wake_pipe_read, self._wake_pipe_write = os.pipe()
         self.register(self._wake_pipe_read, selectors.EVENT_READ, None)
@@ -369,6 +393,7 @@ class DriverBase(Thread, Dispatcher):
 
     def __init__(self, config):
     # rmv def __init__(self, config, name, loader, id):
+        self._state = DriverBaseState.CONSTRUCTING
         self._parent = default_driver_parent
         self.config = config if config else {}
         self._name = type(self).__name__
@@ -380,6 +405,7 @@ class DriverBase(Thread, Dispatcher):
         self._ok_to_start = True
         super().__init__(name=self._name)
         self._after_init()
+        self._state = DriverBaseState.CONSTRUCTED
 
     def _after_init(self):
         pass
@@ -497,6 +523,7 @@ class DriverBase(Thread, Dispatcher):
 
     def open_for_business(self):
         logger.info('{} open for business'.format(self.name))
+        self._state = DriverBaseState.STARTED
         self._open_for_business.set()
 
     def start_and_wait(self):
@@ -505,7 +532,7 @@ class DriverBase(Thread, Dispatcher):
 
     def setup(self):
         self._event_queue = self._create_event_queue()
-        self._event_queue.setup()
+        self._event_queue._setup()
         self._timelets = list()
         self._open_for_business = Event()
         self.subscribe(None, DriverSignals.STOP_NOW, self._stop_now, raise_on_not_found=False, skip_self=False)
@@ -543,6 +570,7 @@ class DriverBase(Thread, Dispatcher):
                 while self._keep_running:
                     if not self.loop():
                         self._keep_running = False
+                self._state = DriverBaseState.STOPPING
             finally:
                 self.shutdown()
         except Exception as e:
