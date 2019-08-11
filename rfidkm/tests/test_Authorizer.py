@@ -39,7 +39,7 @@ class MemberLoginStub(DriverBase):
     def setup(self):
         super().setup()
         self._death_of_rats = self.config.get('DeathOfRats', None)
-        self._state = 1
+        self._test_state = 1
         self._red = 0
         self._blue = 0
         self.subscribe(None, KeyMasterSignals.USER_AUTHORIZED, self.receive_user_authorized, determines_start_order=False)
@@ -52,7 +52,7 @@ class MemberLoginStub(DriverBase):
         self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0006276739')  # red tag
     def receive_user_authorized(self, data):
         if data.rfid == '0006276739':  # red tag
-            assert self._state == 2
+            assert self._test_state == 2
             self._red += 1
             assert data.authorized
             assert Permission('power') in data.effective_rights
@@ -61,7 +61,7 @@ class MemberLoginStub(DriverBase):
             else:
                 self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0002864796')  # blue tag
         elif data.rfid == '0002864796':  # blue tag
-            assert self._state == 2
+            assert self._test_state == 2
             self._blue +=1
             assert not data.authorized
             assert not (Permission('power') in data.effective_rights)
@@ -69,11 +69,11 @@ class MemberLoginStub(DriverBase):
                 self._death_of_rats.stop_all()
     def receive_user_login_failed(self, data):
         if data.rfid == '0006276739':  # red tag
-            assert self._state == 1
+            assert self._test_state == 1
             self.publish(KeyMasterSignals.SWIPE_10, monotonic(), '0002864796')  # blue tag
         elif data.rfid == '0002864796':  # blue tag
-            assert self._state == 1
-            self._state += 1
+            assert self._test_state == 1
+            self._test_state += 1
             member_data = {
                 '0002864796':{  # blue tag
                     'user':{

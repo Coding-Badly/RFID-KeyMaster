@@ -218,10 +218,10 @@ class DriverGroup(OrderedDict):
 
     def setup(self):
         for driver in self._check_flattened():
-            assert driver._state == DriverBaseState.CONSTRUCTED
-            driver._state = DriverBaseState.INITIALIZING
+            assert driver._driver_state == DriverBaseState.CONSTRUCTED
+            driver._driver_state = DriverBaseState.INITIALIZING
             driver.setup()
-            driver._state = DriverBaseState.INITIALIZED
+            driver._driver_state = DriverBaseState.INITIALIZED
 
     def start(self):
         drivers_in_start_order = self._check_in_start_order()
@@ -229,21 +229,21 @@ class DriverGroup(OrderedDict):
         if not_ok_to_start:
             raise DriverWontStartError(not_ok_to_start)
         for driver in drivers_in_start_order:
-            assert driver._state == DriverBaseState.INITIALIZED
-            driver._state = DriverBaseState.STARTING
+            assert driver._driver_state == DriverBaseState.INITIALIZED
+            driver._driver_state = DriverBaseState.STARTING
             driver.start_and_wait()
 
     def teardown(self):
         for driver in self._check_flattened():
-            assert driver._state == DriverBaseState.STOPPED
-            driver._state = DriverBaseState.TEARINGDOWN
+            assert driver._driver_state == DriverBaseState.STOPPED
+            driver._driver_state = DriverBaseState.TEARINGDOWN
             driver.teardown()
-            driver._state = DriverBaseState.TORNDOWN
+            driver._driver_state = DriverBaseState.TORNDOWN
 
     def join(self):
         for driver in self._check_flattened():
             driver.join()
-            driver._state = DriverBaseState.STOPPED
+            driver._driver_state = DriverBaseState.STOPPED
 
 class DriverEvent():
     def __init__(self, id, args, kwargs):
@@ -393,7 +393,7 @@ class DriverBase(Thread, Dispatcher):
 
     def __init__(self, config):
     # rmv def __init__(self, config, name, loader, id):
-        self._state = DriverBaseState.CONSTRUCTING
+        self._driver_state = DriverBaseState.CONSTRUCTING
         self._parent = default_driver_parent
         self.config = config if config else {}
         self._name = type(self).__name__
@@ -405,7 +405,7 @@ class DriverBase(Thread, Dispatcher):
         self._ok_to_start = True
         super().__init__(name=self._name)
         self._after_init()
-        self._state = DriverBaseState.CONSTRUCTED
+        self._driver_state = DriverBaseState.CONSTRUCTED
 
     def _after_init(self):
         pass
@@ -523,7 +523,7 @@ class DriverBase(Thread, Dispatcher):
 
     def open_for_business(self):
         logger.info('{} open for business'.format(self.name))
-        self._state = DriverBaseState.STARTED
+        self._driver_state = DriverBaseState.STARTED
         self._open_for_business.set()
 
     def start_and_wait(self):
@@ -570,7 +570,7 @@ class DriverBase(Thread, Dispatcher):
                 while self._keep_running:
                     if not self.loop():
                         self._keep_running = False
-                self._state = DriverBaseState.STOPPING
+                self._driver_state = DriverBaseState.STOPPING
             finally:
                 self.shutdown()
         except Exception as e:
