@@ -427,7 +427,7 @@ class DriverBase(Thread, Dispatcher):
         self._start_before = set()
         # fix: Use the following instead of returning a Boolean from setup.
         self._ok_to_start = True
-        super().__init__(name=self._name)  // fix
+        super().__init__(name=self._name)  # fix
         self._after_init()
         self._driver_state = DriverBaseState.CONSTRUCTED
 
