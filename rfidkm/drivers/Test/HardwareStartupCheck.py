@@ -65,3 +65,4 @@ class HardwareStartupCheck(DriverBase):
             assert self.expected_current_was_flowing == self.current_was_flowing
         if self.expected_relay_was_closed is not None:
             assert self.expected_relay_was_closed == self.relay_was_closed
+        super().teardown()

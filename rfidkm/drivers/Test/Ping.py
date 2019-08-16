@@ -41,6 +41,7 @@ class Ping1(PingN):
     def setup(self):
         super().setup()
         self.subscribe('Pong1', 'receive_ball', 13, determines_start_order=False)
+        self._death_of_rats = self.find_driver_by_name('DeathOfRats', True)
         return True  # rmv
     def startup(self):
         super().startup()
@@ -59,9 +60,8 @@ class Ping1(PingN):
             return True
         except queue.Empty:
             pass
-        dor = self.find_driver_by_name('DeathOfRats', True)
-        if dor:
-            dor.stop_all()
+        if self._death_of_rats:
+            self._death_of_rats.stop_all()
         return False
 
 class Ping2(PingN):

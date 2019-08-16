@@ -2,7 +2,7 @@ import logging
 
 from NewDriverBase import DriverBase
 
-def test_001(caplog):
+def rmv_test_001(caplog):
     caplog.set_level(logging.INFO)
     tm1 = DriverBase()
     tm1.setup()

@@ -62,7 +62,6 @@ from time import monotonic
 
 from pydispatch import Dispatcher
 
-# rmv from drivers import Signals
 from .signals import DriverSignals
 from ..exceptions import DriverWontStartError, LeftOverEdgesError
 from ..exceptions.RequiredDriverException import RequiredDriverException
@@ -99,6 +98,9 @@ class DriverBaseState(enum.IntEnum):
     TEARINGDOWN = enum.auto()
     TORNDOWN = enum.auto()
     LAST = enum.auto()
+
+CONFIGURATION_STATE = {DriverBaseState.CONSTRUCTING, DriverBaseState.CONSTRUCTED, DriverBaseState.INITIALIZING, DriverBaseState.INITIALIZED}
+THREAD_ACTIVE_STATE = {DriverBaseState.STARTING, DriverBaseState.STARTED, DriverBaseState.STOPPING}
 
 class DriverGroup(OrderedDict):
     def __init__(self, name=None):
@@ -340,7 +342,7 @@ class DriverThunk():
 class DriverQueue(queue.Queue):
     def _setup(self):
         pass
-    def teardown(self):
+    def _teardown(self):
         pass
 
 class DriverQueuePlusSelect():
@@ -402,7 +404,7 @@ class DriverQueuePlusSelect():
                 if tries == 1:
                     endtime = monotonic() + timeout
                 continue
-    def teardown(self):
+    def _teardown(self):
         self.unregister(self._wake_pipe_read)
         for key in list(self._selector.get_map()):
             _ = self.unregister(key)
@@ -416,13 +418,10 @@ class DriverQueuePlusSelect():
 class DriverBase(Thread, Dispatcher):
 
     def __init__(self, config):
-    # rmv def __init__(self, config, name, loader, id):
         self._driver_state = DriverBaseState.CONSTRUCTING
         self._parent = default_driver_parent
         self.config = config if config else {}
         self._name = type(self).__name__
-        # rmv self.loader = loader
-        # rmv self.id = id
         self._event_thunks = list()
         self._start_before = set()
         # fix: Use the following instead of returning a Boolean from setup.
@@ -431,44 +430,36 @@ class DriverBase(Thread, Dispatcher):
         self._after_init()
         self._driver_state = DriverBaseState.CONSTRUCTED
 
-    # constructed
     def _after_init(self):
         pass
 
-    # setup to initialized
     @property
     def name(self):
         return self._name
 
-    # setup to initialized
     def emits_event(self, event_name):
+        assert self._driver_state in CONFIGURATION_STATE
         events = getattr(self, '_EVENTS_', None)
         if events is None:
             return False
         return event_name in events
 
-    # setup to initialized
     def has_values(self):
+        assert self._driver_state in CONFIGURATION_STATE
         return False
 
-    # setup to initialized
     def find_driver_by_event(self, event_name, skip_self=True):
+        assert self._driver_state in CONFIGURATION_STATE
         skip = self if skip_self else None
         return self._parent.find_driver_by_event(event_name, skip)
 
-    # setup to initialized
     def find_driver_by_name(self, driver_name, skip_self=True):
+        assert self._driver_state in CONFIGURATION_STATE
         skip = self if skip_self else None
         return self._parent.find_driver_by_name(driver_name, skip)
 
-    # rmv def getDriver(self, driver_name, controller=None):
-    # rmv     driver = self.loader.getDriver(driver_name, controller)
-    # rmv     if driver == None:
-    # rmv         raise RequiredDriverException(driver_name)
-    # rmv     return driver  
-
-    # setup to initialized
     def subscribe(self, driver_name, event_name, id, determines_start_order=True, raise_on_not_found=True, skip_self=True):
+        assert self._driver_state in CONFIGURATION_STATE
         if driver_name is None:
             partner = self.find_driver_by_event(event_name, skip_self)
             if partner is None:
@@ -489,22 +480,22 @@ class DriverBase(Thread, Dispatcher):
             partner._start_before.add(self)
         return True
 
-    # running
     def publish(self, event_name, *args, **kwargs):
+        assert self._driver_state in THREAD_ACTIVE_STATE
         return self.emit(event_name, *args, **kwargs)
 
     #fix
     #def revoke(self):
 
-    # running
     def call_after(self, after, method, *args, **kwargs):
+        assert self._driver_state in THREAD_ACTIVE_STATE
         event = DriverEvent(method, args, kwargs)
         timelet = DriverTimelet(event, monotonic()+after)
         heapq.heappush(self._timelets, timelet)
         return timelet
 
-    # running
     def call_every(self, every, method, *args, **kwargs):
+        assert self._driver_state in THREAD_ACTIVE_STATE
         event = DriverEvent(method, args, kwargs)
         fire_now = kwargs.get('fire_now', None)
         if fire_now is not None:
@@ -515,27 +506,30 @@ class DriverBase(Thread, Dispatcher):
         heapq.heappush(self._timelets, timelet)
         return timelet
 
-    # setup to initialized
     def register(self, fileobj, events, data=None):
+        assert self._driver_state in CONFIGURATION_STATE
         self._event_queue.register(fileobj, events, data)
 
     # teardown to constructed
     def unregister(self, fileobj):
-        self._event_queue.register(fileobj)
+        # fix
+        self._event_queue.register(fileobj)  # <-- super fix!!!
 
-    # start to running
     def ok_to_start(self):
+        assert self._driver_state in CONFIGURATION_STATE
         return self._ok_to_start
 
-    # anytime before start
     def dont_start(self):
+        assert self._driver_state in CONFIGURATION_STATE
         self._ok_to_start = False
 
     def get(self, block=True, timeout=None):
         # fix: At some point _event_queue.task_done() should be called.
+        assert self._driver_state in THREAD_ACTIVE_STATE
         return self._event_queue.get(block=block, timeout=timeout)
 
     def process_one(self):
+        assert self._driver_state in THREAD_ACTIVE_STATE
         while True:
             timeout = None
             while self._timelets:
@@ -560,15 +554,18 @@ class DriverBase(Thread, Dispatcher):
         return DriverQueue()
 
     def open_for_business(self):
+        assert self._driver_state == DriverBaseState.STARTING
         logger.info('{} open for business'.format(self.name))
         self._driver_state = DriverBaseState.STARTED
         self._open_for_business.set()
 
     def start_and_wait(self):
+        assert self._driver_state == DriverBaseState.STARTING
         self.start()
         self._open_for_business.wait()
 
     def setup(self):
+        assert self._driver_state == DriverBaseState.INITIALIZING
         self._event_queue = self._create_event_queue()
         self._event_queue._setup()
         self._timelets = list()
@@ -576,10 +573,12 @@ class DriverBase(Thread, Dispatcher):
         self.subscribe(None, DriverSignals.STOP_NOW, self._stop_now, raise_on_not_found=False, skip_self=False)
 
     def startup(self):
+        assert self._driver_state == DriverBaseState.STARTING
         self._keep_running = self._ok_to_start
         self._start_before = None
 
     def loop(self):
+        assert self._driver_state == DriverBaseState.STARTED
         while self._keep_running:
             self.process_one()
         return False
@@ -588,6 +587,7 @@ class DriverBase(Thread, Dispatcher):
         self._keep_running = False
 
     def shutdown(self):
+        assert self._driver_state == DriverBaseState.STOPPING
         pass
 
     def teardown(self):
@@ -595,7 +595,7 @@ class DriverBase(Thread, Dispatcher):
         # setup.  Whatever is done in setup should be undone in teardown.  If
         # this method is ever brought into play it will be called in the same
         # basic fashion as setup.
-        self._event_queue.teardown()
+        self._event_queue._teardown()
         self._event_queue = None
         self._timelets = None
         # fix: What can be done with _open_for_business?
@@ -626,11 +626,4 @@ class DeathOfRats(DriverBase):
     def shutdown(self):
         super().shutdown()
         self.publish(DriverSignals.STOP_NOW)
-
-# rmv class DriverBaseOld(DriverBase):
-# rmv     def __init__(self, config, loader, id):
-# rmv         # fix: Loader needs to become Parent
-# rmv         super().__init__(get_next_name(), config, loader, id)
-# rmv     def loop(self):
-# rmv         return False
 
