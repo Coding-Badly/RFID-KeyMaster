@@ -11,24 +11,24 @@
   stated is implied from an instance being created.  A minimum amount of 
   initialization is performed so the instance is stable (but unusable).  
   Constructed happens from the primary thread.
-  
+
   The next state is "initialized".  This state is entered when setup is
   called.  Initialized happens from the primary thread.  Typical activities
   include locating and connecting to partners.  Just enough should be done to
   make the instance ready to run.
-  
+
   The next state is "running".  This state is entered when start_and_wait is
   called.  Each instance is expected to create a thread then continue running
   from that thread.  The start_and_wait method is called from the primary
   thread and blocks until the thread has indicated it is ready for business.
-  
+
   When running is entered, the run method is called which calls startup, loop
   until _keep_running is False, then shutdown.
 
   The thread terminating leaves the DriverBase in a "terminated" state.
   Theoretically, it is possible to restart the thread transitioning to
   running.  At the time this was written that is neither tested nor needed.
-  
+
   If teardown is called the DriverBase transitions back to constructed.
 
   ----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ from operator import methodcaller
 import os
 import queue
 import selectors
-from threading import Thread, Event
+from threading import Thread, Event, Lock
 from time import monotonic
 
 from pydispatch import Dispatcher
@@ -246,7 +246,8 @@ class DriverGroup(OrderedDict):
         for driver in self._check_flattened():
             assert driver._driver_state == DriverBaseState.CONSTRUCTED
             driver._driver_state = DriverBaseState.INITIALIZING
-            driver.setup()
+            rv = driver.setup()
+            assert rv is None
             driver._driver_state = DriverBaseState.INITIALIZED
 
     def start(self):
@@ -415,18 +416,17 @@ class DriverQueuePlusSelect():
         os.close(self._wake_pipe_read)
         self._wake_pipe_read = None
 
-class DriverBase(Thread, Dispatcher):
+class DriverBase(Dispatcher):
 
     def __init__(self, config):
+        super().__init__()
+        self._config = config if config else {}
         self._driver_state = DriverBaseState.CONSTRUCTING
         self._parent = default_driver_parent
-        self.config = config if config else {}
         self._name = type(self).__name__
         self._event_thunks = list()
         self._start_before = set()
-        # fix: Use the following instead of returning a Boolean from setup.
         self._ok_to_start = True
-        super().__init__(name=self._name)  # fix
         self._after_init()
         self._driver_state = DriverBaseState.CONSTRUCTED
 
@@ -436,6 +436,10 @@ class DriverBase(Thread, Dispatcher):
     @property
     def name(self):
         return self._name
+
+    @property
+    def config(self):
+        return self._config
 
     def emits_event(self, event_name):
         assert self._driver_state in CONFIGURATION_STATE
@@ -507,12 +511,14 @@ class DriverBase(Thread, Dispatcher):
         return timelet
 
     def register(self, fileobj, events, data=None):
+        # fix
+        assert False
         assert self._driver_state in CONFIGURATION_STATE
         self._event_queue.register(fileobj, events, data)
 
-    # teardown to constructed
     def unregister(self, fileobj):
         # fix
+        assert False
         self._event_queue.register(fileobj)  # <-- super fix!!!
 
     def ok_to_start(self):
@@ -553,23 +559,35 @@ class DriverBase(Thread, Dispatcher):
     def _create_event_queue(self):
         return DriverQueue()
 
+    def start_and_wait(self):
+        assert self._driver_state == DriverBaseState.STARTING
+        self._open_for_business = Event()
+        with self._lock:
+            assert self._thread is None
+            self._thread = Thread(target=self.run, name=type(self).__name__)
+            self._thread.start()
+        self._open_for_business.wait()
+        self._open_for_business = None
+
+    def join(self):
+        with self._lock:
+            our_thread = self._thread
+        if our_thread:
+            our_thread.join()
+
     def open_for_business(self):
         assert self._driver_state == DriverBaseState.STARTING
         logger.info('{} open for business'.format(self.name))
         self._driver_state = DriverBaseState.STARTED
         self._open_for_business.set()
 
-    def start_and_wait(self):
-        assert self._driver_state == DriverBaseState.STARTING
-        self.start()
-        self._open_for_business.wait()
-
     def setup(self):
         assert self._driver_state == DriverBaseState.INITIALIZING
+        self._lock = Lock()
+        self._thread = None
         self._event_queue = self._create_event_queue()
         self._event_queue._setup()
         self._timelets = list()
-        self._open_for_business = Event()
         self.subscribe(None, DriverSignals.STOP_NOW, self._stop_now, raise_on_not_found=False, skip_self=False)
 
     def startup(self):
@@ -584,24 +602,26 @@ class DriverBase(Thread, Dispatcher):
         return False
 
     def _stop_now(self):
+        assert self._driver_state == DriverBaseState.STARTED
         self._keep_running = False
 
     def shutdown(self):
         assert self._driver_state == DriverBaseState.STOPPING
-        pass
+        with self._lock:
+            self._thread = None  # rmv? keep? protect?
 
     def teardown(self):
-        # fix: Teardown is currently not used.  This method is the inverse of
-        # setup.  Whatever is done in setup should be undone in teardown.  If
-        # this method is ever brought into play it will be called in the same
-        # basic fashion as setup.
+        assert self._driver_state == DriverBaseState.TEARINGDOWN
         self._event_queue._teardown()
         self._event_queue = None
         self._timelets = None
-        # fix: What can be done with _open_for_business?
+        # rmv: fix: What can be done with _open_for_business?
         # fix: If revoke is added then reverse the subscribe to STOP_NOW
+        self._lock = None
+        #self._thread = None  # rmv? keep? protect? assert?
 
     def run(self):
+        assert self._driver_state == DriverBaseState.STARTING
         try:
             self.startup()
             try:

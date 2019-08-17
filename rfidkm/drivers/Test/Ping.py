@@ -42,7 +42,6 @@ class Ping1(PingN):
         super().setup()
         self.subscribe('Pong1', 'receive_ball', 13, determines_start_order=False)
         self._death_of_rats = self.find_driver_by_name('DeathOfRats', True)
-        return True  # rmv
     def startup(self):
         super().startup()
         self.publish('receive_ball', 1)
