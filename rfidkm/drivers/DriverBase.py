@@ -8,8 +8,8 @@
   unexpected exceptions into a clean exit.
 
   DriverBase instances have a state.  The first state is "constructed".  This
-  stated is implied from an instance being created.  A minimum amount of 
-  initialization is performed so the instance is stable (but unusable).  
+  stated is implied from an instance being created.  A minimum amount of
+  initialization is performed so the instance is stable (but unusable).
   Constructed happens from the primary thread.
 
   The next state is "initialized".  This state is entered when setup is
@@ -512,7 +512,7 @@ class DriverBase(Dispatcher):
 
     def register(self, fileobj, events, data=None):
         # fix
-        assert False
+        # rmv assert False
         assert self._driver_state in CONFIGURATION_STATE
         self._event_queue.register(fileobj, events, data)
 

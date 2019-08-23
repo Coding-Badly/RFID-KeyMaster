@@ -71,7 +71,7 @@ class MemberDataFreshener(DriverBase):
     def _log_exception(self, exc, description):
         s1 = str(exc)
         if s1 != self._previous_exception:
-            logger.exception(description)
+            logger.error(description, exc_info=exc)
             self._previous_exception = s1
     def poll_for_fresh_data(self):
         try:
