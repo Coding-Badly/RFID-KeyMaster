@@ -33,7 +33,7 @@ class LoadableDriverBuilder():
     def build(self):
         root = DriverGroup('root')
         if not self.create_drivers_from_list(root, self._config['root']):
-            dor = root.add(DeathOfRats(None))
+            dor = root.add(DeathOfRats(config=None))
         self.create_tree_from_config(root)
         return root
     def create_drivers_from_list(self, group_anchor, group_driver_list):
@@ -41,7 +41,7 @@ class LoadableDriverBuilder():
             driver_name = driver_config['driver']
             module_name = driver_config.get('module', None)
             driver_class = self._loader.get_driver_class(driver_name, module_name)
-            group_anchor.add(driver_class(driver_config))
+            group_anchor.add(driver_class(config=driver_config))
         return len(group_driver_list) > 0
     def create_tree_from_config(self, anchor):
         for group_name in self._config['groups']:

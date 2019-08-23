@@ -41,9 +41,9 @@ def interval_duration():
 def prepare_member_data_group(config_MemberDataFreshener, run_for_seconds = None):
     run_for_seconds = run_for_seconds if run_for_seconds else 60.0*60.0
     root = DriverGroup('root')
-    mdc = root.add(MemberDataCacher(None))
-    mdf = root.add(MemberDataFreshener(config_MemberDataFreshener))
-    dor = root.add(RunForSeconds({'seconds':run_for_seconds}))
+    mdc = root.add(MemberDataCacher(config=None))
+    mdf = root.add(MemberDataFreshener(config=config_MemberDataFreshener))
+    dor = root.add(RunForSeconds(config={'seconds':run_for_seconds}))
     mdp1 = mdc.get_path()
     mdp2 = mdp1.parent / (mdp1.name + '.bak')
     return (root, mdp1, mdp2)

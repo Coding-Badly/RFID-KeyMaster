@@ -75,7 +75,7 @@ def create_drivers_from_branch(loader, group_anchor, group_driver_list):
         driver_name = driver_config['driver']
         module_name = driver_config.get('module', None)
         driver_class = loader.get_driver_class(driver_name, module_name)
-        group_anchor.add(driver_class(driver_config))
+        group_anchor.add(driver_class(config=driver_config))
     return len(group_driver_list) > 0
 
 def create_branch_from_config(loader, anchor, config, group_name_list):
@@ -90,7 +90,7 @@ def test_002(caplog, raw_config_002):
     config = Configuration(raw_config_002)
     root = DriverGroup('root')
     if not create_drivers_from_branch(loader, root, config['root']):
-        dor = root.add(DeathOfRats(None))
+        dor = root.add(DeathOfRats(config=None))
     create_branch_from_config(loader, root, config, config['groups'])
     root.setup()
     root.start()

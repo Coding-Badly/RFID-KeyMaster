@@ -418,8 +418,8 @@ class DriverQueuePlusSelect():
 
 class DriverBase(Dispatcher):
 
-    def __init__(self, config):
-        super().__init__()
+    def __init__(self, config, **kwargs):
+        super().__init__(**kwargs)
         self._config = config if config else {}
         self._driver_state = DriverBaseState.CONSTRUCTING
         self._parent = default_driver_parent
