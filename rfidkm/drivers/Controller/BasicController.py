@@ -24,14 +24,14 @@
 
 ============================================================================="""
 import logging
-from rfidkm.drivers.signals import KeyMasterSignals
+from rfidkm.drivers.signals import KeyMasterSignals, UserAuthorizedEvent, UserDeniedEvent
 from rfidkm.drivers.DriverBase import DriverBase
-from rfidkm.locktypes import create_state_machine, LockControlObserver
+from rfidkm.locktypes import create_state_machine
 from rfidkm.utils.securitycontext import Permission
 
 logger = logging.getLogger(__name__)
 
-class BasicController(DriverBase, LockControlObserver):
+class BasicController(DriverBase):
     _events_ = [KeyMasterSignals.CONTROL_RELAY]
     def setup(self):
         super().setup()
@@ -50,9 +50,11 @@ class BasicController(DriverBase, LockControlObserver):
         logger.info('receive_user_authorized...')
         logger.info('{}'.format(data.rfid))
         logger.info('{}'.format(data.authorized))
+        self._state_machine.process(UserAuthorizedEvent(data.rfid))
     def _receive_user_login_failed(self, data):
         logger.info('receive_user_login_failed...')
         logger.info('{}'.format(data.rfid))
+        self._state_machine.process(UserDeniedEvent(data.rfid))
     def _receive_current_flowing(self, value):
         logger.info('receive_current_flowing...')
         logger.info('{}'.format(value))
@@ -61,15 +63,19 @@ class BasicController(DriverBase, LockControlObserver):
         logger.info('receive_relay_closed...')
         logger.info('{}'.format(value))
         self._state_machine.process_relay_closed(value)
-
-"""
-from rfidkm.drivers.signals import KeyMasterSignals, Signals, UserAuthorizedEvent, UserDeniedEvent, UserFinishedEvent
-
-self._state_machine.process_relay_closed(True / False)
-self._state_machine.process_current_flowing(True / False)
-
-self._state_machine.process(UserAuthorizedEvent('0006276739'))  # red tag
-self._state_machine.process(UserDeniedEvent('0002864796'))  # blue tag
-
-"""
-
+    def close_relay(self):
+        # fix? rmv? self._state_machine.relay_is_closed = True
+        # fix? rmv? 
+        log_during_test(self._subject, 'close the relay')
+        self.publish(KeyMasterSignals.CONTROL_RELAY, True)
+    def open_relay(self):
+        # fix? rmv? self._state_machine.relay_is_closed = False
+        # fix? rmv? 
+        log_during_test(self._subject, 'open the relay')
+        self.publish(KeyMasterSignals.CONTROL_RELAY, False)
+    def start_timeout_timer(self, seconds):
+        # fix? rmv? log_during_test(self._subject, 'post a timeout in {} seconds'.format(seconds))
+    def stop_timeout_timer(self):
+        # fix? rmv? log_during_test(self._subject, 'cancel the timeout request')
+    def log(lvl, msg, *args, **kwargs):
+        pass

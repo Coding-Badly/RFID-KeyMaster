@@ -24,7 +24,6 @@ import logging
 
 from rfidkm.drivers.signals import Signals, KeyMasterSignals, UserFinishedEvent
 from rfidkm.statemachine import record_during_test, StateMachine, StateMachineEvent
-from .lockcontrolobserver import LockControlObserver
 
 # rmv 
 logger = logging.getLogger(__name__)

@@ -25,7 +25,7 @@
 ============================================================================="""
 from rfidkm.exceptions import DriverClassNotFoundError
 
-from .lockcontrolobserver import LockControlObserver, LockControlObserverForTesting
+from .lockcontrolobserver import LockControlObserverForTesting
 from .BasicPowerControlStateMachine import BasicPowerControlStateMachine
 
 def create_state_machine(class_name, controller, config):
