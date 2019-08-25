@@ -69,7 +69,8 @@ def converted_config_001():
         },
         {
             "driver": "BasicController",
-            "lock_type": "BasicPowerControl"
+            "lock_type": "BasicPowerControl",
+            "inactivity_timeout": 5
         },
         {
             "driver": "PiFaceDigital2Relay",
