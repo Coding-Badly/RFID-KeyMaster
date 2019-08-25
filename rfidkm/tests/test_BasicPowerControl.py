@@ -236,7 +236,7 @@ def create_authorized_active():
     e1.append(("E", "keep_closed", "authorized", EVENT_ENTER_STATE))
     e1.append(("E", "authorized", "authorized", EVENT_INITIALIZE_STATE))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_ENTER_STATE))
-    e1.append(("L", "post a timeout in 300 seconds"))
+    e1.append(("L", "post a timeout in 300.0 seconds"))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_INITIALIZE_STATE))
     assert tm1._active_member_id == '0006276739'
     assert tm1._pending_member_id is None
@@ -258,7 +258,7 @@ def test_simple_authorized(caplog):
     e1.append(("E", "authorized_active", "authorized_active", PowerControlSignals.CLOSED_NONE))
     e1.append(("E", "authorized_active", "authorized_active", EVENT_EXIT_STATE))
     e1.append(("E", "authorized", "authorized_idle", EVENT_ENTER_STATE))
-    e1.append(("L", "post a timeout in 300 seconds"))
+    e1.append(("L", "post a timeout in 300.0 seconds"))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_INITIALIZE_STATE))
     assert tm1._active_member_id == '0006276739'
     assert tm1._pending_member_id is None
@@ -294,7 +294,7 @@ def test_authorized_from_manual_override(caplog):
     e1.append(("E", "authorized_active", "authorized_active", PowerControlSignals.CLOSED_NONE))
     e1.append(("E", "authorized_active", "authorized_active", EVENT_EXIT_STATE))
     e1.append(("E", "authorized", "authorized_idle", EVENT_ENTER_STATE))
-    e1.append(("L", "post a timeout in 300 seconds"))
+    e1.append(("L", "post a timeout in 300.0 seconds"))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_INITIALIZE_STATE))
     #log_during_test(tm1, '----------')
     tm1.process_current_flowing(True)
@@ -351,7 +351,7 @@ def test_ghost_idle_authorized(caplog):
     e1.append(("E", "keep_closed", "authorized", EVENT_ENTER_STATE))
     e1.append(("E", "authorized", "authorized", EVENT_INITIALIZE_STATE))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_ENTER_STATE))
-    e1.append(("L", "post a timeout in 300 seconds"))
+    e1.append(("L", "post a timeout in 300.0 seconds"))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_INITIALIZE_STATE))
     log_recording(tm1._recording)
     assert e1 == tm1._recording
@@ -370,7 +370,7 @@ def do_authorized_exit(trigger):
     e1.append(("E", "keep_closed", "authorized", EVENT_ENTER_STATE))
     e1.append(("E", "authorized", "authorized", EVENT_INITIALIZE_STATE))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_ENTER_STATE))
-    e1.append(("L", "post a timeout in 300 seconds"))
+    e1.append(("L", "post a timeout in 300.0 seconds"))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_INITIALIZE_STATE))
     assert tm1._active_member_id == '0006276739'
     assert tm1._pending_member_id is None
@@ -410,7 +410,7 @@ def test_authorized_finished(caplog):
     e1.append(("E", "keep_closed", "authorized", EVENT_ENTER_STATE))
     e1.append(("E", "authorized", "authorized", EVENT_INITIALIZE_STATE))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_ENTER_STATE))
-    e1.append(("L", "post a timeout in 300 seconds"))
+    e1.append(("L", "post a timeout in 300.0 seconds"))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_INITIALIZE_STATE))
     assert tm1._active_member_id == '0006276739'
     assert tm1._pending_member_id is None
@@ -446,7 +446,7 @@ def test_authorized_idle_authorized_idle(caplog):
     e1.append(("E", "keep_closed", "authorized", EVENT_ENTER_STATE))
     e1.append(("E", "authorized", "authorized", EVENT_INITIALIZE_STATE))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_ENTER_STATE))
-    e1.append(("L", "post a timeout in 300 seconds"))
+    e1.append(("L", "post a timeout in 300.0 seconds"))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_INITIALIZE_STATE))
     assert tm1._active_member_id == '0006276739'
     assert tm1._pending_member_id is None
@@ -460,7 +460,7 @@ def test_authorized_idle_authorized_idle(caplog):
     e1.append(("E", "keep_closed", "authorized", EVENT_ENTER_STATE))
     e1.append(("E", "authorized", "authorized", EVENT_INITIALIZE_STATE))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_ENTER_STATE))
-    e1.append(("L", "post a timeout in 300 seconds"))
+    e1.append(("L", "post a timeout in 300.0 seconds"))
     e1.append(("E", "authorized_idle", "authorized_idle", EVENT_INITIALIZE_STATE))
     assert tm1._active_member_id == '0008683072'
     assert tm1._pending_member_id is None
