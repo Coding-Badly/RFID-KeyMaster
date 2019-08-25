@@ -45,6 +45,7 @@ class BasicPowerControlStateMachine(StateMachine):
         self._observer = None
         self._active_member_id = None
         self._pending_member_id = None
+        self._inactivity_timeout = 5*60
     def _get_initial_state(self):
         return self.initial_hardware_check
     def _close_relay(self):
@@ -74,6 +75,8 @@ class BasicPowerControlStateMachine(StateMachine):
             self._post_signal(UserFinishedEvent(event.id))
     def _set_observer(self, observer):
         self._observer = observer
+    def _set_configuration(self, config):
+        self._inactivity_timeout = float(config.get('inactivity_timeout', self._inactivity_timeout))
     def process_current_flowing(self, current_flowing):
         self.current_is_flowing = current_flowing
         self._generate_relay_current()
@@ -186,7 +189,7 @@ class BasicPowerControlStateMachine(StateMachine):
     @record_during_test
     def authorized_idle(self, event):
         if event == Signals.ENTER_STATE:
-            self._observer.start_timeout_timer(5*60)
+            self._observer.start_timeout_timer(self._inactivity_timeout)
             return None
         if event == PowerControlSignals.CLOSED_FLOW:
             self._transition(self.authorized_active)
@@ -236,7 +239,7 @@ class BasicPowerControlStateMachine(StateMachine):
     @record_during_test
     def rmv_authorized_idle(self, event):
         if event == Signals.ENTER_STATE:
-            self._observer.start_timeout_timer(5*60)
+            self._observer.start_timeout_timer(self._inactivity_timeout)
             return None
         if event == KeyMasterSignals.USER_AUTHORIZED:
             if self._active_member_id == event.id:
