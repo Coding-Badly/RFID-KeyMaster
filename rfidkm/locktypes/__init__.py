@@ -34,6 +34,7 @@ def create_state_machine(class_name, controller, config):
         if controller is None:
             controller = LockControlObserverForTesting(rv1)
         rv1._set_observer(controller)
+        rv1._set_configuration(config)
         rv1.initialize_machine()
         return rv1
     else:
