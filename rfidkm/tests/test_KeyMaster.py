@@ -68,7 +68,8 @@ def converted_config_001():
             "driver": "SycreaderUSB125"
         },
         {
-            "driver": "BasicController"
+            "driver": "BasicController",
+            "lock_type": "BasicPowerControl"
         },
         {
             "driver": "PiFaceDigital2Relay",

@@ -27,6 +27,7 @@ import logging
 from rfidkm.drivers.signals import KeyMasterSignals, UserAuthorizedEvent, UserDeniedEvent
 from rfidkm.drivers.DriverBase import DriverBase
 from rfidkm.locktypes import create_state_machine
+from rfidkm.statemachine.state_machine import EVENT_TIMEOUT
 from rfidkm.utils.securitycontext import Permission
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ class BasicController(DriverBase):
     _events_ = [KeyMasterSignals.CONTROL_RELAY]
     def setup(self):
         super().setup()
+        self._timelet = None
         self._power_permission = Permission('power')
         lock_type = self.config.get('lock_type', 'BasicPowerControl')
         class_name = lock_type + 'StateMachine'
@@ -65,17 +67,28 @@ class BasicController(DriverBase):
         self._state_machine.process_relay_closed(value)
     def close_relay(self):
         # fix? rmv? self._state_machine.relay_is_closed = True
-        # fix? rmv? 
-        log_during_test(self._subject, 'close the relay')
+        # fix? rmv?
+        logger.info('close the relay')
         self.publish(KeyMasterSignals.CONTROL_RELAY, True)
     def open_relay(self):
         # fix? rmv? self._state_machine.relay_is_closed = False
-        # fix? rmv? 
-        log_during_test(self._subject, 'open the relay')
+        # fix? rmv?
+        logger.info('open the relay')
         self.publish(KeyMasterSignals.CONTROL_RELAY, False)
     def start_timeout_timer(self, seconds):
         # fix? rmv? log_during_test(self._subject, 'post a timeout in {} seconds'.format(seconds))
+        logger.info('post a timeout in {} seconds'.format(seconds))
+        assert self._timelet is None
+        self._timelet = self.call_after(seconds, self.process_timeout)
     def stop_timeout_timer(self):
         # fix? rmv? log_during_test(self._subject, 'cancel the timeout request')
+        logger.info('cancel the timeout request')
+        if self._timelet:
+            self._timelet.disable()
+            self._timelet = None
     def log(lvl, msg, *args, **kwargs):
         pass
+    def process_timeout(self):
+        logger.info('timeout')
+        self._timelet = None
+        self._state_machine.process(EVENT_TIMEOUT)
